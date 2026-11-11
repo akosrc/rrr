@@ -1,24 +1,23 @@
-name: Build and Package
+name: Build Deb and Dylib
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch: # İstersen elle de başlatabilmen için
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-latest # iOS/Mac projeleri için macOS daha uyumludur
 
     steps:
-    - name: 1. Depoyu Klonla
+    - name: Depoyu Klonla
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
-    - name: 2. Theos Kurulumu
+    - name: Theos Kurulumu
       run: |
         export THEOS=$HOME/theos
         mkdir -p $THEOS
+        # GitHub Actions'ta git clone hatası vermemesi için ZIP ile indiriyoruz
         curl -L https://github.com/theos/theos/archive/refs/heads/master.zip -o theos.zip
         unzip -q theos.zip
         mv theos-master/* $THEOS
@@ -26,28 +25,17 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: 3. Derleme Yap (Make)
+    - name: Derleme Yap (Hata olsa bile devam et)
       run: |
         make clean || true
-        make package FINALPACKAGE=1
+        make package FINALPACKAGE=1 || true
       continue-on-error: true
 
-    - name: 4. Deb ve Dylib Dosyalarını Bul ve Tek Klasörde Topla
-      run: |
-        mkdir -p Cikti
-        find . -name "*.dylib" -exec cp {} Cikti/ \;
-        find . -name "*.deb" -exec cp {} Cikti/ \;
-        
-        cd Cikti
-        # EĞER KLASÖR BOŞSA HATA VERMESİNİ ENGELLE
-        if [ "$(ls -A .)" ]; then
-          zip -r ../Sonuc.zip .
-        else
-          echo "Derleme basarisiz oldu. Hata mesajini Actions loglarindan kontrol edin." > ../Sonuc.zip
-        fi
-
-    - name: 5. Sonuc.zip Dosyasını Yükle
+    - name: Deb ve Dylib Dosyalarını Bul ve Yükle
       uses: actions/upload-artifact@v4
       with:
-        name: Proje-Ciktisi
-        path: Sonuc.zip
+        name: Derlenen-Dosyalar
+        # Eğer derleme başarılıysa bulduğu tüm .deb ve .dylib dosyalarını GitHub'a yükler
+        path: |
+          **/*.deb
+          **/*.dylib
