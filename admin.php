@@ -357,6 +357,29 @@ $config = json_decode(file_get_contents($config_file), true);
 $visitors_data = json_decode(file_get_contents($visitors_file), true);
 if (!is_array($visitors_data)) $visitors_data = [];
 
+$global_stop = isset($config['global_stop']) ? $config['global_stop'] : false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['toggle_global_stop'])) {
+        $global_stop = !$global_stop;
+        file_put_contents($config_file, json_encode(["global_stop" => $global_stop]));
+        if ($global_stop) {
+            foreach ($keys_data as $k => $v) { if ($v['status'] !== 'banned') { $keys_data[$k]['status'] = 'global_banned'; } }
+        } else {
+            foreach ($keys_data as $k => $v) { if ($v['status'] === 'global_banned') { $keys_data[$k]['status'] = 'active'; } }
+        }
+        file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        header("Location: admin.php"); exit;
+    }
+
+// --- GİRİŞ YAPILDIYSA GERİ KALAN TÜM ADMIN PANEL KODLARI ---
+$keys_data = json_decode(file_get_contents($json_file), true);
+if (!is_array($keys_data)) $keys_data = [];
+$config = json_decode(file_get_contents($config_file), true);
+$visitors_data = json_decode(file_get_contents($visitors_file), true);
+if (!is_array($visitors_data)) $visitors_data = [];
+
 $global_stop = isset($config['global_stop'])
 
 // --- GİRİŞ YAPILDIYSA GERİ KALAN TÜM ADMIN PANEL KODLARI ---
