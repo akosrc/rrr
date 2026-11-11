@@ -24,12 +24,12 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: 3. Derleme Yap (Hatayi Gormek Icin)
+    - name: 3. Sadece Dylib Derle (Deb Yok)
       run: |
         make clean || true
-        make package FINALPACKAGE=1
+        make
 
-    - name: 4. Dylib Dosyasını Bul ve İndirme Butonu İçin Hazırla
+    - name: 4. Sadece Dylib Dosyasını İndirme Butonu İçin Hazırla
       uses: actions/upload-artifact@v4
       with:
         name: Derlenen-Dylib
