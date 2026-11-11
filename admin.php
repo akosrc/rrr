@@ -210,8 +210,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 <button class="modal-close" onclick="closeModal()">&times;</button>
                 <h2 class="modal-title">Satın Alım</h2>
                 <div class="modal-plan" id="modalPlanName">Paket Adı</div>
-                <div class="info-box" id="modalInfoText">Bu paket hakkında detaylı bilgi, kurulum adımları ve teslimat süreci buraya eklenecektir.</div>
-                <a href="https://t.me/qtyg1" target="_blank" class="telegram-btn">
+                <div class="info-box" id="modalInfoText">Ödeme işlemini tamamladıktan sonra, lisans anahtarınız anında Telegram üzerinden tarafınıza iletilecektir.</div>
+                <a href="https://t.me/dylibsafe" target="_blank" class="telegram-btn">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.112l-6.4 4.02-2.76-.862c-.6-.188-.615-.6.125-.89l10.78-4.155c.5-.185.936.112.78.89z"/></svg>
                     Telegram'dan Satın Al
                 </a>
@@ -321,7 +321,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         <label>Username</label>
                         <div class="input-wrapper">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <input type="text" name="username" placeholder="zirvedeyim0" required autofocus>
+                            <input type="text" name="username" placeholder="Enter Username" required autofocus>
                         </div>
                     </div>
                     <div class="input-group">
