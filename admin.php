@@ -2,7 +2,6 @@
 session_start();
 
 // --- YENİ EKLENEN: VİTRİN (LANDING PAGE) MANTIĞI ---
-// Eğer kullanıcı giriş yapmamışsa ve login sayfasına gitmediyse vitrin sayfasını göster.
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
@@ -10,7 +9,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
     <head>
         <meta charset="UTF-8">
         <title>DARK IOS - Premium Tools</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -23,11 +22,11 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             /* Navbar */
             .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 100; max-width: 1200px; margin: 0 auto; }
             .logo { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #fff; display: flex; align-items: center; gap: 8px; }
-            .logo-icon { display: none; } /* D ikonu gizlendi */
+            .logo-icon { display: none; }
             .nav-links { display: flex; gap: 20px; align-items: center; }
-            .nav-btn { color: #a78bfa; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; }
+            .nav-btn { color: #a78bfa; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; white-space: nowrap;}
             .nav-btn:hover { color: #fff; background: rgba(139, 92, 246, 0.1); }
-            .login-btn { background: transparent; color: #fff; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; border: 1px solid #4c1d95; }
+            .login-btn { background: transparent; color: #fff; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; border: 1px solid #4c1d95; white-space: nowrap;}
             .login-btn:hover { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
 
             /* Hero Section */
@@ -44,15 +43,16 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
             .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
             
-            /* İNDİRİM FİYAT TASARIMI */
-            .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; margin-right: 10px; font-weight: 600; }
-            .plan-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
-            .plan-price span { font-size: 16px; color: #a78bfa; font-weight: 600; margin-left: 5px; }
+            /* İNDİRİM FİYAT TASARIMI (Düzeltildi) */
+            .price-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+            .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; font-weight: 600; }
+            .new-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
+            .new-price span { font-size: 16px; color: #a78bfa; font-weight: 600; margin-left: 5px; }
             
             .plan-sub { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; margin-bottom: 25px; font-weight: 500; }
             .features-list { list-style: none; margin-bottom: 30px; flex: 1; }
             .features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
-            .features-list li svg { color: #8b5cf6; width: 16px; height: 16px; }
+            .features-list li svg { color: #8b5cf6; width: 16px; height: 16px; flex-shrink: 0;}
             .buy-btn { width: 100%; padding: 14px; background: rgba(139, 92, 246, 0.1); color: #c084fc; border: 1px solid #8b5cf6; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s; }
             .buy-btn:hover { background: #8b5cf6; color: #fff; }
 
@@ -83,10 +83,20 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .telegram-btn:hover { background: #1c8dbf; box-shadow: 0 0 20px rgba(34, 158, 217, 0.4); }
             .telegram-btn svg { width: 20px; height: 20px; }
 
+            /* MOBİL UYUMLULUK (RESPONSIVE) */
             @media (max-width: 768px) { 
+                .navbar { padding: 15px 20px; }
+                .nav-btn { padding: 6px 10px; font-size: 13px; }
+                .login-btn { padding: 6px 14px; font-size: 13px; }
                 .hero h1 { font-size: 36px; } 
-                .nav-links { display: none; } /* Mobilde menüyü gizle */
-                .navbar { justify-content: center; }
+                .hero p { font-size: 14px; }
+                .new-price { font-size: 32px; }
+                .pricing-container { padding: 20px; }
+            }
+
+            @media (max-width: 480px) {
+                .nav-btn span { display: none; } /* Çok küçük ekranda yazıyı gizle, sadece ikon kalsın */
+                .logo { font-size: 18px; }
             }
         </style>
     </head>
@@ -95,20 +105,17 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         <div class="bg-glow-2"></div>
 
         <nav class="navbar">
-            <!-- Logo kısmı (D ikonu silindi) -->
             <div class="logo">DARK IOS</div>
             <div class="nav-links">
-                <!-- Telegram Kanal Linki -->
                 <a href="https://t.me/qtyg1" target="_blank" class="nav-btn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.112l-6.4 4.02-2.76-.862c-.6-.188-.615-.6.125-.89l10.78-4.155c.5-.185.936.112.78.89z"/></svg>
-                    Info / Channel
+                    <span>Info / Channel</span>
                 </a>
                 <a href="?page=login" class="login-btn">Login</a>
             </div>
         </nav>
 
         <div class="hero">
-            <!-- YENİ YAZI BURADA -->
             <h1>Sınırları Aş, En İyi<br><span>Araçlara Anında Erişim.</span></h1>
             <p>Premium araçlar ve yazılımlar için en güvenilir adres. İhtiyacına uygun paketi seç, anında teslim al.</p>
         </div>
@@ -117,8 +124,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- 1 GÜNLÜK -->
             <div class="price-card">
                 <div class="plan-name">1 Günlük</div>
-                <!-- İNDİRİMLİ FİYAT -->
-                <div class="plan-price"><del class="old-price">4 AZN</del> 3 AZN</div>
+                <div class="price-wrapper">
+                    <del class="old-price">4 AZN</del>
+                    <div class="new-price">3 AZN</div>
+                </div>
                 <div class="plan-sub">
                     <span>~ $1.76 USD</span>
                     <span>~ 60.00 TL</span>
@@ -135,8 +144,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <div class="price-card popular">
                 <div class="popular-badge">POPULER</div>
                 <div class="plan-name">7 Günlük</div>
-                <!-- İNDİRİMLİ FİYAT -->
-                <div class="plan-price"><del class="old-price">15 AZN</del> 10 AZN</div>
+                <div class="price-wrapper">
+                    <del class="old-price">15 AZN</del>
+                    <div class="new-price">10 AZN</div>
+                </div>
                 <div class="plan-sub">
                     <span>~ $5.88 USD</span>
                     <span>~ 200.00 TL</span>
@@ -152,8 +163,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- AYLIK -->
             <div class="price-card">
                 <div class="plan-name">Aylık</div>
-                <!-- İNDİRİMLİ FİYAT -->
-                <div class="plan-price"><del class="old-price">35 AZN</del> 22 AZN</div>
+                <div class="price-wrapper">
+                    <del class="old-price">35 AZN</del>
+                    <div class="new-price">22 AZN</div>
+                </div>
                 <div class="plan-sub">
                     <span>~ $12.94 USD</span>
                     <span>~ 440.00 TL</span>
@@ -169,8 +182,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- SEZONLUK -->
             <div class="price-card">
                 <div class="plan-name">Sezonluk</div>
-                <!-- İNDİRİMLİ FİYAT -->
-                <div class="plan-price"><del class="old-price">60 AZN</del> 35 AZN</div>
+                <div class="price-wrapper">
+                    <del class="old-price">60 AZN</del>
+                    <div class="new-price">35 AZN</div>
+                </div>
                 <div class="plan-sub">
                     <span>~ $20.58 USD</span>
                     <span>~ 700.00 TL</span>
@@ -224,7 +239,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 <h2 class="modal-title">Satın Alım</h2>
                 <div class="modal-plan" id="modalPlanName">Paket Adı</div>
                 
-                <!-- BURASI BOŞ BILGI ALANI (SONRADAN DOLDURULACAK) -->
                 <div class="info-box" id="modalInfoText">
                     Bu paket hakkında detaylı bilgi, kurulum adımları ve teslimat süreci buraya eklenecektir.
                 </div>
@@ -265,7 +279,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
     <?php
     exit; 
 }
+
 // --- VİTRİN MANTIĞI BİTİŞ ---
+
+// Geri kalan tüm kod (Login ve Admin Panel) tamamen aynı, buraya eklemene gerek yok, dosyanın geri kalanı aynen kalsın.// --- VİTRİN MANTIĞI BİTİŞ ---
 
 
 // --- LOGIN EKRANI (Görseldeki tarza uygun koyu tema) ---
