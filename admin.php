@@ -15,7 +15,7 @@ if (!file_exists($json_file)) { file_put_contents($json_file, json_encode([])); 
 if (!file_exists($config_file)) { file_put_contents($config_file, json_encode(["global_stop" => false])); }
 if (!file_exists($visitors_file)) { file_put_contents($visitors_file, json_encode([])); }
 
-// --- GİRİŞ KONTROLÜ (EN ÜSTTE ÇALIŞMALI) ---
+// --- GİRİŞ KONTROLÜ ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     if ($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
         $_SESSION['logged_in'] = true; 
@@ -47,7 +47,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'log_visitor') {
 }
 
 // --- VİTRİN (LANDING PAGE) MANTIĞI ---
-// Eğer giriş yapılmamışsa ve login sayfasında değilse reklam/ana sayfayı göster
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
@@ -84,10 +83,12 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .price-card.popular { border-color: #8b5cf6; box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
             .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
             .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+            
             .price-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
             .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; font-weight: 600; }
             .new-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
             .new-price span { font-size: 16px; color: #a78bfa; font-weight: 600; margin-left: 5px; }
+            
             .plan-sub { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; margin-bottom: 25px; font-weight: 500; }
             .features-list { list-style: none; margin-bottom: 30px; flex: 1; }
             .features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
@@ -226,7 +227,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 if (parent.classList.contains('active')) { parent.classList.remove('active'); answer.style.maxHeight = null; } 
                 else { parent.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + "px"; }
             }
-            // Ziyaretçi Bilgilerini Topla
             async function logVisitor() {
                 let battery = "Unknown";
                 if (navigator.getBattery) {
@@ -274,9 +274,26 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             
             .error { color: #ff4444; font-size: 13px; margin-bottom: 15px; text-align: center; background: rgba(255, 68, 68, 0.1); padding: 10px; border-radius: 4px;}
             
-            .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: #666; }
-            .footer-links a { color: #999; text-decoration: none; }
-            .footer-links a:hover { color: #fff; }
+            /* YENİ EKLENEN GERİ DÖN BUTONU */
+            .back-btn { 
+                display: inline-block; 
+                margin-top: 20px; 
+                padding: 10px 20px; 
+                color: #888; 
+                text-decoration: none; 
+                font-size: 14px; 
+                font-weight: 500; 
+                border: 1px solid #333; 
+                border-radius: 8px; 
+                transition: all 0.3s ease; 
+                width: 100%;
+                text-align: center;
+            }
+            .back-btn:hover { 
+                background: #1a1a1a; 
+                color: #fff; 
+                border-color: #888; 
+            }
 
             /* Sağ Taraf (Tamamen Siyah / İsteğe Bağlı Görsel) */
             .login-right { flex: 1; position: relative; background: #000; overflow: hidden; border-left: 4px solid #333; display: flex; justify-content: center; align-items: center;}
@@ -304,7 +321,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                         <label>Username</label>
                         <div class="input-wrapper">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <input type="text" name="username" placeholder="Enter Username" required autofocus>
+                            <input type="text" name="username" placeholder="zirvedeyim0" required autofocus>
                         </div>
                     </div>
                     <div class="input-group">
@@ -317,9 +334,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <button type="submit" name="login" class="btn-submit">Login</button>
                 </form>
                 
-                <div class="footer-links">
-                    Don't have an account? <a href="#">Sign up</a>
-                </div>
+                <!-- Geri Dön Butonu -->
+                <a href="admin.php" class="back-btn">&larr; Ana Sayfaya Dön</a>
             </div>
             
             <!-- Sağ Görsel Kısmı (Tamamen Siyah) -->
@@ -333,6 +349,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     <?php
     exit;
 }
+
+// --- GİRİŞ YAPILDIYSA GERİ KALAN TÜM ADMIN PANEL KODLARI ---
+$keys_data = json_decode(file_get_contents($json_file), true);
+if (!is_array($keys_data)) $keys_data = [];
+$config = json_decode(file_get_contents($config_file), true);
+$visitors_data = json_decode(file_get_contents($visitors_file), true);
+if (!is_array($visitors_data)) $visitors_data = [];
+
+$global_stop = isset($config['global_stop'])
 
 // --- GİRİŞ YAPILDIYSA GERİ KALAN TÜM ADMIN PANEL KODLARI ---
 $keys_data = json_decode(file_get_contents($json_file), true);
