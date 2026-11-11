@@ -34,18 +34,17 @@ jobs:
 
     - name: 4. Deb ve Dylib Dosyalarını Bul ve Tek Klasörde Topla
       run: |
-        # Çıktıların toplanacağı boş bir klasör oluştur
         mkdir -p Cikti
-        
-        # Proje içinde ne kadar .dylib varsa hepsini kopyala
         find . -name "*.dylib" -exec cp {} Cikti/ \;
-        
-        # Proje içinde ne kadar .deb varsa hepsini kopyala
         find . -name "*.deb" -exec cp {} Cikti/ \;
         
-        # Klasörün içine gir ve klasörün İÇİNDEKİ dosyaları ZIP'le (dışarıda klasör olmasın)
         cd Cikti
-        zip -r ../Sonuc.zip .
+        # EĞER KLASÖR BOŞSA HATA VERMESİNİ ENGELLE
+        if [ "$(ls -A .)" ]; then
+          zip -r ../Sonuc.zip .
+        else
+          echo "Derleme basarisiz oldu. Hata mesajini Actions loglarindan kontrol edin." > ../Sonuc.zip
+        fi
 
     - name: 5. Sonuc.zip Dosyasını Yükle
       uses: actions/upload-artifact@v4
