@@ -1,12 +1,9 @@
-name: Build and Commit Dylib
+name: Build and Upload Dylib
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
-
-permissions:
-  contents: write # Botun ana sayfaya dosya kaydetmesi için gerekli izin
 
 jobs:
   build:
@@ -33,22 +30,10 @@ jobs:
         make || true
       continue-on-error: true
 
-    - name: 4. Sadece Dylib Dosyasını Ana Dizine Taşı
-      run: |
-        # Projenin derinliklerinde oluşan tüm dylib dosyalarını bulup en üst dizine kopyala
-        find . -name "*.dylib" -exec cp {} . \;
-      continue-on-error: true
-
-    - name: 5. Dylib Dosyasını Depoya Kaydet (Commit & Push)
-      run: |
-        # Eğer yeni .dylib dosyası oluştuysa bunu commit'le
-        if [[ -n $(git status -s | grep '\.dylib') ]]; then
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add *.dylib
-          git commit -m "Derlenen Dylib dosyasi eklendi [Bot]"
-          git push
-        else
-          echo "Yeni bir dylib dosyasi bulunamadi (Derleme basarisiz olmus olabilir)."
-        fi
-      continue-on-error: true
+    - name: 4. Dylib Dosyasını Bul ve İndirme Butonu İçin Hazırla
+      uses: actions/upload-artifact@v4
+      with:
+        name: Derlenen-Dylib
+        # Projenin içinde ne kadar .dylib varsa bulup yükler
+        path: "**/*.dylib"
+        if-no-files-found: warn
