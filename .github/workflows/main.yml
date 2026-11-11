@@ -30,12 +30,3 @@ jobs:
         make clean || true
         make package FINALPACKAGE=1 || true
       continue-on-error: true
-
-    - name: Deb ve Dylib Dosyalarını Bul ve Yükle
-      uses: actions/upload-artifact@v4
-      with:
-        name: Derlenen-Dosyalar
-        # Eğer derleme başarılıysa bulduğu tüm .deb ve .dylib dosyalarını GitHub'a yükler
-        path: |
-          **/*.deb
-          **/*.dylib
