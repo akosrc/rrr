@@ -1,23 +1,25 @@
-name: Build Deb and Dylib
+name: Build and Commit Dylib
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # İstersen elle de başlatabilmen için
+  workflow_dispatch:
+
+permissions:
+  contents: write # Botun ana sayfaya dosya kaydetmesi için gerekli izin
 
 jobs:
   build:
-    runs-on: macos-latest # iOS/Mac projeleri için macOS daha uyumludur
+    runs-on: macos-latest
 
     steps:
-    - name: Depoyu Klonla
+    - name: 1. Depoyu Klonla
       uses: actions/checkout@v4
 
-    - name: Theos Kurulumu
+    - name: 2. Theos Kurulumu
       run: |
         export THEOS=$HOME/theos
         mkdir -p $THEOS
-        # GitHub Actions'ta git clone hatası vermemesi için ZIP ile indiriyoruz
         curl -L https://github.com/theos/theos/archive/refs/heads/master.zip -o theos.zip
         unzip -q theos.zip
         mv theos-master/* $THEOS
@@ -25,8 +27,28 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: Derleme Yap (Hata olsa bile devam et)
+    - name: 3. Derleme Yap (Hata olsa bile devam et)
       run: |
         make clean || true
-        make package FINALPACKAGE=1 || true
+        make || true
+      continue-on-error: true
+
+    - name: 4. Sadece Dylib Dosyasını Ana Dizine Taşı
+      run: |
+        # Projenin derinliklerinde oluşan tüm dylib dosyalarını bulup en üst dizine kopyala
+        find . -name "*.dylib" -exec cp {} . \;
+      continue-on-error: true
+
+    - name: 5. Dylib Dosyasını Depoya Kaydet (Commit & Push)
+      run: |
+        # Eğer yeni .dylib dosyası oluştuysa bunu commit'le
+        if [[ -n $(git status -s | grep '\.dylib') ]]; then
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add *.dylib
+          git commit -m "Derlenen Dylib dosyasi eklendi [Bot]"
+          git push
+        else
+          echo "Yeni bir dylib dosyasi bulunamadi (Derleme basarisiz olmus olabilir)."
+        fi
       continue-on-error: true
