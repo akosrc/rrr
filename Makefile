@@ -1,23 +1,23 @@
-ARCHS = arm64 arm64e
-TARGET = iphone:clang:latest:14.0
-INSTALL_TARGET_PROCESSES = SpringBoard
+ARCHS = arm64
+DEBUG = 0
+FINALPACKAGE = 1
+FOR_RELEASE = 1
+THEOS_PACKAGE_SCHEME = rootless
 
 include $(THEOS)/makefiles/common.mk
 
-# Projenin adı neyse (depo adı 'rrr' olduğu için rrr yaptım)
-TWEAK_NAME = rrr
+TWEAK_NAME = M7MD
 
-# BURASI ÇOK ÖNEMLİ: Tüm .mm ve .xm dosyaların burada listelenmeli!
-# Eğer başka dosyaların varsa (örn: Tweak.xm varsa) onları da buraya ekle.
-rrr_FILES = Tweak.mm KeySystem.mm Menu.mm Engine.mm
+# WebKit eklendi (KeySystem.mm için gerekli)
+M7MD_FRAMEWORKS = IOKit UIKit Foundation Security QuartzCore CoreGraphics CoreText AVFoundation Accelerate GLKit SystemConfiguration GameController WebKit JRMemory 
+M7MD_CFLAGS += -I/opt/theos/include
+M7MD_LDFLAGS += -F. -framework JRMemory
 
-# Kullanılan frameworkler (WebKit KeySystem için, UIKit genel arayüz için)
-rrr_FRAMEWORKS = UIKit Foundation WebKit
+M7MD_CCFLAGS = -w -std=gnu++14 -fno-rtti -fno-exceptions -DNDEBUG -Wno-module-import-in-extern-c
+M7MD_CFLAGS = -w -fobjc-arc -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-value
 
-# Logos/Substrate kütüphanesi (Tweak'ler için standarttır)
-rrr_LIBRARIES = substrate
+# KeySystem.mm listeye eklendi
+M7MD_FILES =  $(wildcard Menux/*.mm) $(wildcard 菜单/*.mm) $(wildcard View/*.mm) $(wildcard CustomView/*.m) $(wildcard utils/*.cpp) $(wildcard utils/*.m) $(wildcard imgui/*.mm) $(wildcard imgui/*.cpp) $(wildcard ESP/*.mm) $(wildcard ESP/*.cpp) $(wildcard SDK/SHANKS_PUBGM_Basic.cpp) $(wildcard SDK/SHANKS_PUBGM_Basic_functions.cpp) $(wildcard SDK/SHANKS_PUBGM_CoreUObject_functions.cpp) $(wildcard SDK/SHANKS_PUBGM_Engine_functions.cpp) $(wildcard SDK/SHANKS_PUBGM_ShadowTrackerExtra_functions.cpp)  $(wildcard SDK/SHANKS_PUBGM_Client_functions.cpp)  $(wildcard SDK/SHANKS_PUBGM_Gameplay_functions.cpp) $(wildcard libPUBGHookDylib3/*.h) $(wildcard NSURL+hook/*.h) $(wildcard NSURL+hook/*.m) $(wildcard MBProgressHUD/*.m) $(wildcard FCFileManager/*.m) $(wildcard NSEtcHosts/*.m) $(wildcard AppDelegate/*.h) $(wildcard ZXRequestBlock/*.h) $(wildcard DBLOCKRASHID/*.m) $(wildcard ZXURLProtocol/*.m) $(wildcard ZXURLProtocol/*.h) $(wildcard EtcHostsURLProtocol/*.m) $(wildcard MBProgressHUD/*.m) $(wildcard NSObject+URL/*.m) $(wildcard NSURL+hook/*.m) $(wildcard MBProgressHUD/*.h) $(wildcard FCFileManager/*.h) $(wildcard ViewController/*.m) $(wildcard ZXHttpIPGet/*.m) $(wildcard NSURLSession+ZXHttpProxy/*.m) $(wildcard EtcHostsURLProtocol/*.h) $(wildcard ZXURLProtocol/*.m) $(wildcard NSURLSession+ZXHttpProxy/*.h) $(wildcard main/*.m) $(wildcard ZXHttpIPGet/*.h) $(wildcard NSURL+hook/*.h) $(wildcard ViewController/*.h) $(wildcard NSObject+URL/*.h) $(wildcard 旁路/*.mm) $(wildcard behaviorbypassforESP/*.h) $(wildcard View/*.m) KeySystem.mm
 
-# Objective-C ARC desteği
-rrr_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
