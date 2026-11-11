@@ -23,7 +23,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             /* Navbar */
             .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 100; max-width: 1200px; margin: 0 auto; }
             .logo { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #fff; display: flex; align-items: center; gap: 8px; }
-            .logo-icon { display: none !important; }
+            .logo-icon { display: none; } /* D ikonu gizlendi */
             .nav-links { display: flex; gap: 20px; align-items: center; }
             .nav-btn { color: #a78bfa; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; }
             .nav-btn:hover { color: #fff; background: rgba(139, 92, 246, 0.1); }
@@ -43,8 +43,12 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .price-card.popular { border-color: #8b5cf6; box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
             .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
             .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
-            .plan-price { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 5px; }
-            .plan-price span { font-size: 16px; color: #a78bfa; font-weight: 600; }
+            
+            /* İNDİRİM FİYAT TASARIMI */
+            .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; margin-right: 10px; font-weight: 600; }
+            .plan-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
+            .plan-price span { font-size: 16px; color: #a78bfa; font-weight: 600; margin-left: 5px; }
+            
             .plan-sub { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; margin-bottom: 25px; font-weight: 500; }
             .features-list { list-style: none; margin-bottom: 30px; flex: 1; }
             .features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
@@ -91,7 +95,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         <div class="bg-glow-2"></div>
 
         <nav class="navbar">
-            <div class="logo"><div class="logo-icon">D</div> DARK IOS</div>
+            <!-- Logo kısmı (D ikonu silindi) -->
+            <div class="logo">DARK IOS</div>
             <div class="nav-links">
                 <!-- Telegram Kanal Linki -->
                 <a href="https://t.me/qtyg1" target="_blank" class="nav-btn">
@@ -103,7 +108,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         </nav>
 
         <div class="hero">
-            <h1>Try It Out First, Then<br><span>Choose a Strategy.</span></h1>
+            <!-- YENİ YAZI BURADA -->
+            <h1>Sınırları Aş, En İyi<br><span>Araçlara Anında Erişim.</span></h1>
             <p>Premium araçlar ve yazılımlar için en güvenilir adres. İhtiyacına uygun paketi seç, anında teslim al.</p>
         </div>
 
@@ -111,7 +117,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- 1 GÜNLÜK -->
             <div class="price-card">
                 <div class="plan-name">1 Günlük</div>
-                <div class="plan-price">3 AZN</div>
+                <!-- İNDİRİMLİ FİYAT -->
+                <div class="plan-price"><del class="old-price">4 AZN</del> 3 AZN</div>
                 <div class="plan-sub">
                     <span>~ $1.76 USD</span>
                     <span>~ 60.00 TL</span>
@@ -128,7 +135,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <div class="price-card popular">
                 <div class="popular-badge">POPULER</div>
                 <div class="plan-name">7 Günlük</div>
-                <div class="plan-price">10 AZN</div>
+                <!-- İNDİRİMLİ FİYAT -->
+                <div class="plan-price"><del class="old-price">15 AZN</del> 10 AZN</div>
                 <div class="plan-sub">
                     <span>~ $5.88 USD</span>
                     <span>~ 200.00 TL</span>
@@ -144,7 +152,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- AYLIK -->
             <div class="price-card">
                 <div class="plan-name">Aylık</div>
-                <div class="plan-price">22 AZN</div>
+                <!-- İNDİRİMLİ FİYAT -->
+                <div class="plan-price"><del class="old-price">35 AZN</del> 22 AZN</div>
                 <div class="plan-sub">
                     <span>~ $12.94 USD</span>
                     <span>~ 440.00 TL</span>
@@ -160,7 +169,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             <!-- SEZONLUK -->
             <div class="price-card">
                 <div class="plan-name">Sezonluk</div>
-                <div class="plan-price">35 AZN</div>
+                <!-- İNDİRİMLİ FİYAT -->
+                <div class="plan-price"><del class="old-price">60 AZN</del> 35 AZN</div>
                 <div class="plan-sub">
                     <span>~ $20.58 USD</span>
                     <span>~ 700.00 TL</span>
