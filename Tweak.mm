@@ -1,8 +1,45 @@
-#import <JRMemory/JRMemory.h>
+l#import <JRMemory/JRMemory.h>
+#import <UIKit/UIKit.h>
+
+// --- KEY SİSTEMİ ENTEGRASYONU BAŞLANGIÇ ---
+// KeySystem.mm dosyasındaki fonksiyonları ve değişkenleri dışarıdan çağırmak için tanımlıyoruz
+extern void showKeyMenu(void);
+extern NSString* globalActiveKey;
+
+// Uygulamanın key ile doğrulanıp doğrulanmadığını tutan değişken
+static BOOL isKeyAuthenticated = NO;
+
+// Uygulama başladığında veya menüye girildiğinde çalışacak fonksiyon
+void checkLicenseAndStart() {
+    if (!isKeyAuthenticated && globalActiveKey == nil) {
+        NSLog(@"[DARK IOS] Key girisi bekleniyor...");
+        showKeyMenu(); // Key ekranını aç
+    } else {
+        NSLog(@"[DARK IOS] Key dogrulandi. Sistem aktif.");
+    }
+}
+
+// KeySystem.mm'den başarılı giriş yapıldığında gönderilen "StartHack" bildirimini dinliyoruz
+__attribute__((constructor))
+static void initKeyObserver() {
+    [[NSNotificationCenter defaultCenter] addObserverForName:@"StartHack" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        isKeyAuthenticated = YES;
+        NSLog(@"[DARK IOS] Basarili giris! Hack sistemi aktif edildi.");
+        // Buraya key doğrulandıktan sonra çalışmasını istediğin kodları ekleyebilirsin
+    }];
+}
+// --- KEY SİSTEMİ ENTEGRASYONU BİTİŞ ---
+
 
 %hook ClassName
 
 - (void)drawMenuWindow {
+    // Menü çizilmeden ÖNCE key kontrolü yap
+    if (!isKeyAuthenticated) {
+        checkLicenseAndStart();
+        return; // Key yoksa menüyü çizme, geri dön
+    }
+
     JRMemoryEngine *engine = [JRMemoryEngine sharedInstance];
     AddrRange range = {0x000000000, 0x2000000000};
 
@@ -40,13 +77,6 @@
 bool LockStatus = false;
 bool SpeedPlayer = false;
 
-/*
-This Function checks if the Application has ASLR enabled.
-It gets the mach_header of the Image at Index 0.
-It then checks for the MH_PIE flag. If it is there, it returns TRUE.
-Parameters: nil
-Return: Wether it has ASLR or not
-*/
 bool hasASLR() {
     const struct mach_header *mach;
     mach = _dyld_get_image_header(0);
@@ -58,20 +88,10 @@ bool hasASLR() {
     }
 }
 
-/*
-This Function gets the vmaddr slide of the Image at Index 0.
-Parameters: nil
-Return: the vmaddr slide
-*/
 long long get_slide() {
     return _dyld_get_image_vmaddr_slide(0);
 }
 
-/*
-This Function calculates the Address if ASLR is enabled or returns the normal offset.
-Parameters: The Original Offset
-Return: Either the Offset or the New calculated Offset if ASLR is enabled
-*/
 long long calculateAddress(long long offset) {
     if (hasASLR()) {
         long long slide = get_slide();
@@ -81,12 +101,6 @@ long long calculateAddress(long long offset) {
     }
 }
 
-/*
-This function calculates the size of the data passed as an argument.
-It returns 1 if 4 bytes and 0 if 2 bytes
-Parameters: data to be written
-Return: True = 4 bytes/higher or False = 2 bytes
-*/
 bool getType(unsigned int data) {
     int a = data & 0xffff8000;
     int b = a + 0x00008000;
@@ -94,27 +108,16 @@ bool getType(unsigned int data) {
     return c;
 }
 
-/*
-This is the main Function. This is where the writing takes place.
-It declares the port as mach_task_self, calculates the offset.
-Then it changes the Protections at the offset to be able to write to it.
-After that it sets the Protections back so the Apps runs as before
-Then it vm_writes either 4 Byte or 2 to the address.
-Parameters: the address and the data to be written
-Return: True = Success or False = Failed
-*/
 bool vm_writeData(long long offset, unsigned int data) {
     kern_return_t err;
     mach_port_t port = mach_task_self();
     long long address = calculateAddress(offset);
 
-    // Allow writing to memory
     err = vm_protect(port, (vm_address_t)address, sizeof(data), NO, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
     if (err != KERN_SUCCESS) {
         return FALSE;
     }
 
-    // Write data
     if(getType(data)) {
         data = CFSwapInt32(data);
         err = vm_write(port, (vm_address_t)address, (vm_offset_t)&data, sizeof(data));
@@ -128,16 +131,11 @@ bool vm_writeData(long long offset, unsigned int data) {
         return FALSE;
     }
     
-    // Restore original protections
     err = vm_protect(port, (vm_address_t)address, sizeof(data), NO, VM_PROT_READ | VM_PROT_EXECUTE);
 
     return TRUE;
 }
 
-/*
-Function to apply the LockStatus patch based on the CheckBox state.
-Parameters: state (TRUE to enable, FALSE to disable)
-*/
 void setLockStatus(bool state) {
     LockStatus = state;
     if (LockStatus) {
@@ -148,16 +146,10 @@ void setLockStatus(bool state) {
             NSLog(@"Failed to enable LockStatus");
         }
     } else {
-        // Optional: Revert to original value if needed
-        // bool success = vm_writeData(0x102CA170C, original_value);
         NSLog(@"LockStatus disabled");
     }
 }
 
-/*
-Function to apply the SpeedPlayer patch based on the CheckBox state.
-Parameters: state (TRUE to enable, FALSE to disable)
-*/
 void setSpeedPlayer(bool state) {
     SpeedPlayer = state;
     if (SpeedPlayer) {
@@ -168,13 +160,10 @@ void setSpeedPlayer(bool state) {
             NSLog(@"Failed to enable SpeedPlayer");
         }
     } else {
-        // Optional: Revert to original value if needed
-        // bool success = vm_writeData(0x102C10D84, original_value);
         NSLog(@"SpeedPlayer disabled");
     }
 }
 
-// Example usage with UI (for reference)
 @interface TweakViewController : UIViewController
 @property (nonatomic, strong) UISwitch *lockStatusSwitch;
 @property (nonatomic, strong) UISwitch *speedPlayerSwitch;
@@ -185,15 +174,12 @@ void setSpeedPlayer(bool state) {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Create LockStatus Switch
     self.lockStatusSwitch = [[UISwitch alloc] init];
     [self.lockStatusSwitch addTarget:self action:@selector(lockStatusChanged:) forControlEvents:UIControlEventValueChanged];
     
-    // Create SpeedPlayer Switch
     self.speedPlayerSwitch = [[UISwitch alloc] init];
     [self.speedPlayerSwitch addTarget:self action:@selector(speedPlayerChanged:) forControlEvents:UIControlEventValueChanged];
     
-    // Add switches to view (layout code omitted for brevity)
     [self.view addSubview:self.lockStatusSwitch];
     [self.view addSubview:self.speedPlayerSwitch];
 }
