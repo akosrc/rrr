@@ -7,7 +7,7 @@ $admin_pass = "wear5555.2013a";
 $json_file = "keys.json";
 $backup_file = "keys_backup.json";
 $config_file = "config.json";
-$visitors_file = "visitors.json"; // Ziyaretçi verileri için
+$visitors_file = "visitors.json";
 
 // Dosya kontrolleri
 if (!file_exists($json_file) && file_exists($backup_file)) { copy($backup_file, $json_file); }
@@ -15,40 +15,39 @@ if (!file_exists($json_file)) { file_put_contents($json_file, json_encode([])); 
 if (!file_exists($config_file)) { file_put_contents($config_file, json_encode(["global_stop" => false])); }
 if (!file_exists($visitors_file)) { file_put_contents($visitors_file, json_encode([])); }
 
-// --- ZİYARETÇİ KAYIT MANTIĞI (AJAX ile) ---
+// --- GİRİŞ KONTROLÜ (EN ÜSTTE ÇALIŞMALI) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    if ($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
+        $_SESSION['logged_in'] = true; 
+        header("Location: admin.php"); 
+        exit;
+    } else { 
+        $login_error = "Kullanıcı adı veya şifre hatalı!"; 
+    }
+}
+
+// --- ZİYARETÇİ KAYIT MANTIĞI ---
 if (isset($_POST['action']) && $_POST['action'] == 'log_visitor') {
     $visitors = json_decode(file_get_contents($visitors_file), true);
     if (!is_array($visitors)) $visitors = [];
-    
     $ip = $_SERVER['REMOTE_ADDR'];
-    $user_agent = $_POST['user_agent'] ?? 'Unknown';
-    $device = $_POST['device'] ?? 'Unknown';
-    $os = $_POST['os'] ?? 'Unknown';
-    $battery = $_POST['battery'] ?? 'Unknown';
-    $location = $_POST['location'] ?? 'Unknown';
-    $screen = $_POST['screen'] ?? 'Unknown';
-    
-    // IP'ye göre benzersiz ID oluştur
-    $visitor_id = md5($ip . $user_agent);
-    
+    $visitor_id = md5($ip . ($_POST['user_agent'] ?? ''));
     $visitors[$visitor_id] = [
         'ip' => $ip,
-        'device' => $device,
-        'os' => $os,
-        'battery' => $battery,
-        'location' => $location,
-        'screen' => $screen,
-        'user_agent' => $user_agent,
+        'device' => $_POST['device'] ?? 'Unknown',
+        'os' => $_POST['os'] ?? 'Unknown',
+        'battery' => $_POST['battery'] ?? 'Unknown',
+        'location' => $_POST['location'] ?? 'Unknown',
+        'screen' => $_POST['screen'] ?? 'Unknown',
+        'user_agent' => $_POST['user_agent'] ?? 'Unknown',
         'last_seen' => time()
     ];
-    
     file_put_contents($visitors_file, json_encode($visitors, JSON_PRETTY_PRINT));
-    echo json_encode(["status" => "success"]);
-    exit;
+    echo json_encode(["status" => "success"]); exit;
 }
-// ------------------------------------------
 
 // --- VİTRİN (LANDING PAGE) MANTIĞI ---
+// Eğer giriş yapılmamışsa ve login sayfasında değilse reklam/ana sayfayı göster
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
@@ -85,12 +84,10 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .price-card.popular { border-color: #8b5cf6; box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
             .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
             .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
-            
             .price-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
             .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; font-weight: 600; }
             .new-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
             .new-price span { font-size: 16px; color: #a78bfa; font-weight: 600; margin-left: 5px; }
-            
             .plan-sub { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; margin-bottom: 25px; font-weight: 500; }
             .features-list { list-style: none; margin-bottom: 30px; flex: 1; }
             .features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
@@ -160,59 +157,31 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         <div class="pricing-container">
             <div class="price-card">
                 <div class="plan-name">1 Günlük</div>
-                <div class="price-wrapper">
-                    <del class="old-price">4 AZN</del>
-                    <div class="new-price">3 AZN</div>
-                </div>
+                <div class="price-wrapper"><del class="old-price">4 AZN</del><div class="new-price">3 AZN</div></div>
                 <div class="plan-sub"><span>~ $1.76 USD</span><span>~ 60.00 TL</span></div>
-                <ul class="features-list">
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 Cihaz Sınırı</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 7/24 Destek</li>
-                </ul>
+                <ul class="features-list"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 Cihaz Sınırı</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 7/24 Destek</li></ul>
                 <button class="buy-btn" onclick="openModal('1 Günlük Paket')">Satın Al</button>
             </div>
             <div class="price-card popular">
                 <div class="popular-badge">POPULER</div>
                 <div class="plan-name">7 Günlük</div>
-                <div class="price-wrapper">
-                    <del class="old-price">15 AZN</del>
-                    <div class="new-price">10 AZN</div>
-                </div>
+                <div class="price-wrapper"><del class="old-price">15 AZN</del><div class="new-price">10 AZN</div></div>
                 <div class="plan-sub"><span>~ $5.88 USD</span><span>~ 200.00 TL</span></div>
-                <ul class="features-list">
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Gelişmiş Özellikler</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Öncelikli Destek</li>
-                </ul>
+                <ul class="features-list"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Gelişmiş Özellikler</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Öncelikli Destek</li></ul>
                 <button class="buy-btn" onclick="openModal('7 Günlük Paket')">Satın Al</button>
             </div>
             <div class="price-card">
                 <div class="plan-name">Aylık</div>
-                <div class="price-wrapper">
-                    <del class="old-price">35 AZN</del>
-                    <div class="new-price">22 AZN</div>
-                </div>
+                <div class="price-wrapper"><del class="old-price">35 AZN</del><div class="new-price">22 AZN</div></div>
                 <div class="plan-sub"><span>~ $12.94 USD</span><span>~ 440.00 TL</span></div>
-                <ul class="features-list">
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Sınırsız Kullanım</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tüm Güncellemeler</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> VIP Destek</li>
-                </ul>
+                <ul class="features-list"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Sınırsız Kullanım</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tüm Güncellemeler</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> VIP Destek</li></ul>
                 <button class="buy-btn" onclick="openModal('Aylık Paket')">Satın Al</button>
             </div>
             <div class="price-card">
                 <div class="plan-name">Sezonluk</div>
-                <div class="price-wrapper">
-                    <del class="old-price">60 AZN</del>
-                    <div class="new-price">35 AZN</div>
-                </div>
+                <div class="price-wrapper"><del class="old-price">60 AZN</del><div class="new-price">35 AZN</div></div>
                 <div class="plan-sub"><span>~ $20.58 USD</span><span>~ 700.00 TL</span></div>
-                <ul class="features-list">
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Maksimum Performans</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Özel Beta Erişimi</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Kişisel Menajer</li>
-                </ul>
+                <ul class="features-list"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Maksimum Performans</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Özel Beta Erişimi</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Kişisel Menajer</li></ul>
                 <button class="buy-btn" onclick="openModal('Sezonluk Paket')">Satın Al</button>
             </div>
         </div>
@@ -249,37 +218,22 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         </div>
 
         <script>
-            function openModal(planName) {
-                document.getElementById('modalPlanName').innerText = planName;
-                document.getElementById('infoModal').style.display = 'flex';
-            }
+            function openModal(planName) { document.getElementById('modalPlanName').innerText = planName; document.getElementById('infoModal').style.display = 'flex'; }
             function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
             window.onclick = function(event) { var modal = document.getElementById('infoModal'); if (event.target == modal) { closeModal(); } }
             function toggleFaq(element) {
-                var parent = element.parentElement;
-                var answer = parent.querySelector('.faq-answer');
+                var parent = element.parentElement; var answer = parent.querySelector('.faq-answer');
                 if (parent.classList.contains('active')) { parent.classList.remove('active'); answer.style.maxHeight = null; } 
                 else { parent.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + "px"; }
             }
-
-            // Ziyaretçi Bilgilerini Topla ve Gönder
+            // Ziyaretçi Bilgilerini Topla
             async function logVisitor() {
                 let battery = "Unknown";
                 if (navigator.getBattery) {
-                    try {
-                        const b = await navigator.getBattery();
-                        battery = Math.round(b.level * 100) + "% " + (b.charging ? "(Charging)" : "");
-                    } catch(e) {}
+                    try { const b = await navigator.getBattery(); battery = Math.round(b.level * 100) + "% " + (b.charging ? "(Charging)" : ""); } catch(e) {}
                 }
-                let device = navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop';
-                let os = navigator.platform;
-                let screen = window.screen.width + "x" + window.screen.height;
-                
-                fetch('', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `action=log_visitor&user_agent=${encodeURIComponent(navigator.userAgent)}&device=${device}&os=${os}&battery=${battery}&screen=${screen}&location=Unknown`
-                });
+                fetch('', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=log_visitor&user_agent=${encodeURIComponent(navigator.userAgent)}&device=${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}&os=${navigator.platform}&battery=${battery}&screen=${window.screen.width}x${window.screen.height}&location=Unknown` });
             }
             logVisitor();
         </script>
@@ -289,7 +243,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
     exit; 
 }
 
-// --- YENİ LOGIN EKRANI (Görseldeki gibi siyah/beyaz sütunlu) ---
+// --- YENİ LOGIN EKRANI (Sadece Siyah/Beyaz ve Sütunlu) ---
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     ?>
     <!DOCTYPE html>
@@ -324,15 +278,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
             .footer-links a { color: #999; text-decoration: none; }
             .footer-links a:hover { color: #fff; }
 
-            /* Sağ Taraf (Görsel Efekti) */
-            .login-right { flex: 1; position: relative; background: #000; overflow: hidden; display: flex; justify-content: flex-end; align-items: flex-end;}
-            .column-effect { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+            /* Sağ Taraf (Tamamen Siyah / İsteğe Bağlı Görsel) */
+            .login-right { flex: 1; position: relative; background: #000; overflow: hidden; border-left: 4px solid #333; display: flex; justify-content: center; align-items: center;}
+            .login-right-text { color: #333; font-size: 40px; font-weight: 800; letter-spacing: 5px; text-transform: uppercase; transform: rotate(-90deg); white-space: nowrap;}
 
             /* Mobil Uyumluluk */
             @media (max-width: 768px) {
                 .login-container { flex-direction: column; height: 100vh; border: none; }
                 .login-left { padding: 40px 30px; width: 100%; }
-                .login-right { display: none; } /* Mobilde görseli gizle */
+                .login-right { display: none; } /* Mobilde sağ tarafı gizle */
             }
         </style>
     </head>
@@ -349,8 +303,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <div class="input-group">
                         <label>Username</label>
                         <div class="input-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                            <input type="text" name="username" placeholder="hello@0.email" required autofocus>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <input type="text" name="username" placeholder="zirvedeyim0" required autofocus>
                         </div>
                     </div>
                     <div class="input-group">
@@ -368,10 +322,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                 </div>
             </div>
             
-            <!-- Sağ Görsel Kısmı (Sütunlar) -->
+            <!-- Sağ Görsel Kısmı (Tamamen Siyah) -->
             <div class="login-right">
-                <!-- Buraya istediğin sütun görselini koyabilirsin. Ben şimdilik CSS ile bir arka plan ekledim. -->
-                <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop" class="column-effect" alt="bg">
+                <!-- Eğer buraya bir resim veya yazı eklemek istersen bu div'in içine yazabilirsin -->
+                <div class="login-right-text">DARK IOS</div>
             </div>
         </div>
     </body>
@@ -380,14 +334,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
-// --- ADMIN PANEL VE GİRİŞ KONTROLÜ ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    if ($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
-        $_SESSION['logged_in'] = true; header("Location: admin.php"); exit;
-    } else { $login_error = "Invalid username or password!"; }
-}
-
-// --- GERİ KALAN TÜM ADMIN PANEL KODLARI ---
+// --- GİRİŞ YAPILDIYSA GERİ KALAN TÜM ADMIN PANEL KODLARI ---
 $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
 $config = json_decode(file_get_contents($config_file), true);
@@ -653,13 +600,12 @@ function key_status_badge($v) {
                 Device Info
             </a>
             
-            <!-- YENİ EKLENEN WEB INFO SEKMESİ -->
+            <!-- WEB INFO SEKMESİ -->
             <div class="nav-title" style="margin-top:20px;">Tracking</div>
             <a href="#" class="nav-item" onclick="switchTab('webInfoTab', this)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                 WEB INFO
             </a>
-            <!-- ----------------------- -->
 
             <div class="nav-title" style="margin-top:20px;">Tools</div>
             <a href="#" class="nav-item" onclick="switchTab('bulkTab', this)">
@@ -834,7 +780,7 @@ function key_status_badge($v) {
             </div>
         </div>
 
-        <!-- YENİ EKLENEN WEB INFO SEKMESİ İÇERİĞİ -->
+        <!-- WEB INFO SEKMESİ İÇERİĞİ -->
         <div id="webInfoTab" class="content-area">
             <div class="card">
                 <div class="card-header">
@@ -854,13 +800,12 @@ function key_status_badge($v) {
                         </thead>
                         <tbody>
                             <?php 
-                            // Online olanları (son 5 dakika içinde görülenler) en üste al
                             $online_visitors = [];
                             $offline_visitors = [];
                             $now = time();
                             
                             foreach($visitors_data as $id => $v) {
-                                if (($now - $v['last_seen']) < 300) { // 5 dakika (300 saniye)
+                                if (($now - $v['last_seen']) < 300) {
                                     $v['is_online'] = true;
                                     $online_visitors[$id] = $v;
                                 } else {
@@ -869,7 +814,6 @@ function key_status_badge($v) {
                                 }
                             }
                             
-                            // Birleştir (Online olanlar önce)
                             $sorted_visitors = $online_visitors + $offline_visitors;
 
                             if(empty($sorted_visitors)) echo '<tr><td colspan="6" style="text-align:center;">Henüz ziyaretçi kaydı yok.</td></tr>';
@@ -902,7 +846,6 @@ function key_status_badge($v) {
                 </div>
             </div>
         </div>
-        <!-- ----------------------------------- -->
 
         <div id="bulkTab" class="content-area">
             <div class="card">
@@ -984,7 +927,7 @@ function key_status_badge($v) {
             if(tabId === 'infoTab') title = "Device Info"; 
             if(tabId === 'bulkTab') title = "Bulk Key"; 
             if(tabId === 'settingsTab') title = "Settings";
-            if(tabId === 'webInfoTab') title = "WEB INFO"; // Yeni başlık eklendi
+            if(tabId === 'webInfoTab') title = "WEB INFO";
             document.getElementById('currentPageTitle').innerText = title;
         }
         function filterKeys() {
