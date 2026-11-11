@@ -7,16 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest # iOS/Mac projeleri için macOS daha uyumludur
+    runs-on: macos-latest
 
     steps:
     - name: Depoyu Klonla
       uses: actions/checkout@v4
 
-    - name: Theos Kurulumu
+    - name: Theos Kurulumu (ZIP ile indirme)
       run: |
         export THEOS=$HOME/theos
-        git clone --recursive https://github.com/theos/theos.git $THEOS
+        mkdir -p $THEOS
+        # Git clone yerine direkt zip olarak indirip çıkarıyoruz (Hata bu yüzden kaynaklanıyordu)
+        curl -L https://github.com/theos/theos/archive/refs/heads/master.zip -o theos.zip
+        unzip -q theos.zip
+        mv theos-master/* $THEOS
+        rm -rf theos.zip theos-master
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
