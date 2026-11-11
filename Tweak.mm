@@ -1,23 +1,11 @@
-l#import <JRMemory/JRMemory.h>
+#import <JRMemory/JRMemory.h>
 #import <UIKit/UIKit.h>
 
 // --- KEY SİSTEMİ ENTEGRASYONU BAŞLANGIÇ ---
-// KeySystem.mm dosyasındaki fonksiyonları ve değişkenleri dışarıdan çağırmak için tanımlıyoruz
 extern void showKeyMenu(void);
 extern NSString* globalActiveKey;
 
-// Uygulamanın key ile doğrulanıp doğrulanmadığını tutan değişken
 static BOOL isKeyAuthenticated = NO;
-
-// Uygulama başladığında veya menüye girildiğinde çalışacak fonksiyon
-void checkLicenseAndStart() {
-    if (!isKeyAuthenticated && globalActiveKey == nil) {
-        NSLog(@"[DARK IOS] Key girisi bekleniyor...");
-        showKeyMenu(); // Key ekranını aç
-    } else {
-        NSLog(@"[DARK IOS] Key dogrulandi. Sistem aktif.");
-    }
-}
 
 // KeySystem.mm'den başarılı giriş yapıldığında gönderilen "StartHack" bildirimini dinliyoruz
 __attribute__((constructor))
@@ -25,67 +13,19 @@ static void initKeyObserver() {
     [[NSNotificationCenter defaultCenter] addObserverForName:@"StartHack" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         isKeyAuthenticated = YES;
         NSLog(@"[DARK IOS] Basarili giris! Hack sistemi aktif edildi.");
-        // Buraya key doğrulandıktan sonra çalışmasını istediğin kodları ekleyebilirsin
     }];
 }
 // --- KEY SİSTEMİ ENTEGRASYONU BİTİŞ ---
 
 
-%hook ClassName
-
-- (void)drawMenuWindow {
-    // Menü çizilmeden ÖNCE key kontrolü yap
-    if (!isKeyAuthenticated) {
-        checkLicenseAndStart();
-        return; // Key yoksa menüyü çizme, geri dön
-    }
-
-    JRMemoryEngine *engine = [JRMemoryEngine sharedInstance];
-    AddrRange range = {0x000000000, 0x2000000000};
-
-    float searchValue1 = 10;
-    [engine JRScanMemory:range withValue:&searchValue1 type:JR_Search_Type_Float];
-    
-    float nearbyValue1 = 45;
-    [engine JRNearBySearch:0x100 withValue:&nearbyValue1 type:JR_Search_Type_Float];
-    
-    float modify1 = 500;
-    NSArray *results1 = [engine getAllResults];
-    for (NSValue *result in results1) {
-        if (result != nil) {
-            [engine JRWriteMemory:[result unsignedLongLongValue] withValue:&modify1 type:JR_Search_Type_Float];
-        }
-    }
-}
-
-//**********************************************//
-//**This Header File is used in combination****//
-//**with a dynamic Library and must be rewritten**//
-//**if you want to use it for another purpose****//
-//**********************************************//
-
-//******************************************//
-//**Credits: Razzile & HackJack**//
-//****************************************//
-
-#import <Foundation/Foundation.h>
-#import <mach/mach.h>
-#import <mach-o/dyld.h>
-#import <mach/mach_traps.h>
-
-// Global variables to store the state of CheckBoxes
+// --- MENÜ VE HAFIZA FONKSİYONLARI ---
 bool LockStatus = false;
 bool SpeedPlayer = false;
 
 bool hasASLR() {
     const struct mach_header *mach;
     mach = _dyld_get_image_header(0);
-
-    if (mach->flags & MH_PIE) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    if (mach->flags & MH_PIE) { return TRUE; } else { return FALSE; }
 }
 
 long long get_slide() {
@@ -93,12 +33,8 @@ long long get_slide() {
 }
 
 long long calculateAddress(long long offset) {
-    if (hasASLR()) {
-        long long slide = get_slide();
-        return (slide + offset);
-    } else {
-        return offset;
-    }
+    if (hasASLR()) { long long slide = get_slide(); return (slide + offset); } 
+    else { return offset; }
 }
 
 bool getType(unsigned int data) {
@@ -114,9 +50,7 @@ bool vm_writeData(long long offset, unsigned int data) {
     long long address = calculateAddress(offset);
 
     err = vm_protect(port, (vm_address_t)address, sizeof(data), NO, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
-    if (err != KERN_SUCCESS) {
-        return FALSE;
-    }
+    if (err != KERN_SUCCESS) { return FALSE; }
 
     if(getType(data)) {
         data = CFSwapInt32(data);
@@ -127,62 +61,47 @@ bool vm_writeData(long long offset, unsigned int data) {
         err = vm_write(port, (vm_address_t)address, (vm_offset_t)&data, sizeof(data));
     }
     
-    if (err != KERN_SUCCESS) {
-        return FALSE;
-    }
+    if (err != KERN_SUCCESS) { return FALSE; }
     
     err = vm_protect(port, (vm_address_t)address, sizeof(data), NO, VM_PROT_READ | VM_PROT_EXECUTE);
-
     return TRUE;
 }
 
 void setLockStatus(bool state) {
     LockStatus = state;
     if (LockStatus) {
-        bool success = vm_writeData(0x102CA170C, 0x1F2003D5);
-        if (success) {
-            NSLog(@"LockStatus enabled successfully");
-        } else {
-            NSLog(@"Failed to enable LockStatus");
-        }
-    } else {
-        NSLog(@"LockStatus disabled");
+        vm_writeData(0x102CA170C, 0x1F2003D5);
     }
 }
 
 void setSpeedPlayer(bool state) {
     SpeedPlayer = state;
     if (SpeedPlayer) {
-        bool success = vm_writeData(0x102C10D84, 0x0810281E);
-        if (success) {
-            NSLog(@"SpeedPlayer enabled successfully");
-        } else {
-            NSLog(@"Failed to enable SpeedPlayer");
-        }
-    } else {
-        NSLog(@"SpeedPlayer disabled");
+        vm_writeData(0x102C10D84, 0x0810281E);
     }
 }
 
-@interface TweakViewController : UIViewController
-@property (nonatomic, strong) UISwitch *lockStatusSwitch;
-@property (nonatomic, strong) UISwitch *speedPlayerSwitch;
-@end
 
-@implementation TweakViewController
+// --- HOOK KISMI (KEY KONTROLÜ BURADA YAPILIYOR) ---
+%hook UIViewController
 
 - (void)viewDidLoad {
-    [super viewDidLoad];
+    %orig; // Orijinal kodu çalıştır
     
-    self.lockStatusSwitch = [[UISwitch alloc] init];
-    [self.lockStatusSwitch addTarget:self action:@selector(lockStatusChanged:) forControlEvents:UIControlEventValueChanged];
-    
-    self.speedPlayerSwitch = [[UISwitch alloc] init];
-    [self.speedPlayerSwitch addTarget:self action:@selector(speedPlayerChanged:) forControlEvents:UIControlEventValueChanged];
-    
-    [self.view addSubview:self.lockStatusSwitch];
-    [self.view addSubview:self.speedPlayerSwitch];
+    // Eğer key henüz doğrulanmadıysa ve bu ekran ana ekransa (veya oyunun ilk ekranıysa)
+    if (!isKeyAuthenticated && globalActiveKey == nil) {
+        // Uygulama açıldığında Key menüsünü tetikle
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!isKeyAuthenticated && globalActiveKey == nil) {
+                showKeyMenu();
+            }
+        });
+    }
 }
+
+%end
+
+%hook TweakViewController
 
 - (void)lockStatusChanged:(UISwitch *)sender {
     setLockStatus(sender.isOn);
@@ -192,4 +111,4 @@ void setSpeedPlayer(bool state) {
     setSpeedPlayer(sender.isOn);
 }
 
-@end
+%end
