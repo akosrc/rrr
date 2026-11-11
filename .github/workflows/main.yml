@@ -24,16 +24,14 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: 3. Derleme Yap (Hata olsa bile devam et)
+    - name: 3. Derleme Yap (Hatayi Gormek Icin)
       run: |
         make clean || true
-        make || true
-      continue-on-error: true
+        make package FINALPACKAGE=1
 
     - name: 4. Dylib Dosyasını Bul ve İndirme Butonu İçin Hazırla
       uses: actions/upload-artifact@v4
       with:
         name: Derlenen-Dylib
-        # Projenin içinde ne kadar .dylib varsa bulup yükler
         path: "**/*.dylib"
         if-no-files-found: warn
