@@ -1,7 +1,54 @@
 <?php
 session_start();
 
-// --- YENİ EKLENEN: VİTRİN (LANDING PAGE) MANTIĞI ---
+// Veri dosyaları
+$admin_user = "zirvedeyim0";
+$admin_pass = "wear5555.2013a";
+$json_file = "keys.json";
+$backup_file = "keys_backup.json";
+$config_file = "config.json";
+$visitors_file = "visitors.json"; // Ziyaretçi verileri için
+
+// Dosya kontrolleri
+if (!file_exists($json_file) && file_exists($backup_file)) { copy($backup_file, $json_file); }
+if (!file_exists($json_file)) { file_put_contents($json_file, json_encode([])); }
+if (!file_exists($config_file)) { file_put_contents($config_file, json_encode(["global_stop" => false])); }
+if (!file_exists($visitors_file)) { file_put_contents($visitors_file, json_encode([])); }
+
+// --- ZİYARETÇİ KAYIT MANTIĞI (AJAX ile) ---
+if (isset($_POST['action']) && $_POST['action'] == 'log_visitor') {
+    $visitors = json_decode(file_get_contents($visitors_file), true);
+    if (!is_array($visitors)) $visitors = [];
+    
+    $ip = $_SERVER['REMOTE_ADDR'];
+    $user_agent = $_POST['user_agent'] ?? 'Unknown';
+    $device = $_POST['device'] ?? 'Unknown';
+    $os = $_POST['os'] ?? 'Unknown';
+    $battery = $_POST['battery'] ?? 'Unknown';
+    $location = $_POST['location'] ?? 'Unknown';
+    $screen = $_POST['screen'] ?? 'Unknown';
+    
+    // IP'ye göre benzersiz ID oluştur
+    $visitor_id = md5($ip . $user_agent);
+    
+    $visitors[$visitor_id] = [
+        'ip' => $ip,
+        'device' => $device,
+        'os' => $os,
+        'battery' => $battery,
+        'location' => $location,
+        'screen' => $screen,
+        'user_agent' => $user_agent,
+        'last_seen' => time()
+    ];
+    
+    file_put_contents($visitors_file, json_encode($visitors, JSON_PRETTY_PRINT));
+    echo json_encode(["status" => "success"]);
+    exit;
+}
+// ------------------------------------------
+
+// --- VİTRİN (LANDING PAGE) MANTIĞI ---
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
@@ -15,11 +62,9 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
             body { background-color: #0b0710; color: #f8fafc; min-height: 100vh; overflow-x: hidden; }
             
-            /* Arka Plan Efektleri */
             .bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(11, 7, 16, 0) 70%); top: -100px; left: 50%; transform: translateX(-50%); z-index: -1; pointer-events: none; }
             .bg-glow-2 { position: absolute; width: 800px; height: 800px; background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(11, 7, 16, 0) 70%); bottom: 0; left: -200px; z-index: -1; pointer-events: none; }
 
-            /* Navbar */
             .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 100; max-width: 1200px; margin: 0 auto; }
             .logo { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #fff; display: flex; align-items: center; gap: 8px; }
             .logo-icon { display: none; }
@@ -29,13 +74,11 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .login-btn { background: transparent; color: #fff; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; border: 1px solid #4c1d95; white-space: nowrap;}
             .login-btn:hover { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
 
-            /* Hero Section */
             .hero { text-align: center; padding: 80px 20px 60px 20px; position: relative; max-width: 900px; margin: 0 auto; }
             .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; color: #fff; letter-spacing: -1px; }
             .hero h1 span { color: #c084fc; }
             .hero p { font-size: 16px; color: #94a3b8; max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
-            /* Pricing Cards */
             .pricing-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; }
             .price-card { background: linear-gradient(180deg, rgba(30, 20, 45, 0.8) 0%, rgba(15, 10, 25, 0.9) 100%); border: 1px solid #3b0764; border-radius: 20px; padding: 30px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
             .price-card:hover { transform: translateY(-5px); border-color: #8b5cf6; box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.3); }
@@ -43,7 +86,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
             .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
             
-            /* İNDİRİM FİYAT TASARIMI (Düzeltildi) */
             .price-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
             .old-price { font-size: 18px; color: #64748b; text-decoration: line-through; font-weight: 600; }
             .new-price { font-size: 36px; font-weight: 800; color: #fff; display: flex; align-items: baseline; }
@@ -56,7 +98,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .buy-btn { width: 100%; padding: 14px; background: rgba(139, 92, 246, 0.1); color: #c084fc; border: 1px solid #8b5cf6; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s; }
             .buy-btn:hover { background: #8b5cf6; color: #fff; }
 
-            /* FAQ Section */
             .faq-section { max-width: 800px; margin: 60px auto; padding: 0 20px; position: relative; z-index: 10; }
             .faq-title { text-align: center; font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 40px; }
             .faq-item { background: #150f1e; border: 1px solid #2e1a47; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
@@ -67,10 +108,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .faq-item.active .faq-question svg { transform: rotate(180deg); }
             .faq-question svg { transition: 0.3s; color: #a78bfa; }
 
-            /* Footer */
             .footer { border-top: 1px solid #1e1333; padding: 40px 20px; text-align: center; margin-top: 60px; color: #64748b; font-size: 14px; }
             
-            /* MODAL */
             .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 7, 16, 0.8); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
             .modal-content { background: linear-gradient(180deg, #1e1432 0%, #0f0a1e 100%); border: 1px solid #4c1d95; border-radius: 24px; padding: 40px; width: 100%; max-width: 450px; text-align: center; position: relative; animation: fadeIn 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
             @keyframes fadeIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
@@ -83,7 +122,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             .telegram-btn:hover { background: #1c8dbf; box-shadow: 0 0 20px rgba(34, 158, 217, 0.4); }
             .telegram-btn svg { width: 20px; height: 20px; }
 
-            /* MOBİL UYUMLULUK (RESPONSIVE) */
             @media (max-width: 768px) { 
                 .navbar { padding: 15px 20px; }
                 .nav-btn { padding: 6px 10px; font-size: 13px; }
@@ -93,9 +131,8 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 .new-price { font-size: 32px; }
                 .pricing-container { padding: 20px; }
             }
-
             @media (max-width: 480px) {
-                .nav-btn span { display: none; } /* Çok küçük ekranda yazıyı gizle, sadece ikon kalsın */
+                .nav-btn span { display: none; }
                 .logo { font-size: 18px; }
             }
         </style>
@@ -121,17 +158,13 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         </div>
 
         <div class="pricing-container">
-            <!-- 1 GÜNLÜK -->
             <div class="price-card">
                 <div class="plan-name">1 Günlük</div>
                 <div class="price-wrapper">
                     <del class="old-price">4 AZN</del>
                     <div class="new-price">3 AZN</div>
                 </div>
-                <div class="plan-sub">
-                    <span>~ $1.76 USD</span>
-                    <span>~ 60.00 TL</span>
-                </div>
+                <div class="plan-sub"><span>~ $1.76 USD</span><span>~ 60.00 TL</span></div>
                 <ul class="features-list">
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 Cihaz Sınırı</li>
@@ -139,8 +172,6 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 </ul>
                 <button class="buy-btn" onclick="openModal('1 Günlük Paket')">Satın Al</button>
             </div>
-
-            <!-- 7 GÜNLÜK (POPULER) -->
             <div class="price-card popular">
                 <div class="popular-badge">POPULER</div>
                 <div class="plan-name">7 Günlük</div>
@@ -148,10 +179,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                     <del class="old-price">15 AZN</del>
                     <div class="new-price">10 AZN</div>
                 </div>
-                <div class="plan-sub">
-                    <span>~ $5.88 USD</span>
-                    <span>~ 200.00 TL</span>
-                </div>
+                <div class="plan-sub"><span>~ $5.88 USD</span><span>~ 200.00 TL</span></div>
                 <ul class="features-list">
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Gelişmiş Özellikler</li>
@@ -159,18 +187,13 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 </ul>
                 <button class="buy-btn" onclick="openModal('7 Günlük Paket')">Satın Al</button>
             </div>
-
-            <!-- AYLIK -->
             <div class="price-card">
                 <div class="plan-name">Aylık</div>
                 <div class="price-wrapper">
                     <del class="old-price">35 AZN</del>
                     <div class="new-price">22 AZN</div>
                 </div>
-                <div class="plan-sub">
-                    <span>~ $12.94 USD</span>
-                    <span>~ 440.00 TL</span>
-                </div>
+                <div class="plan-sub"><span>~ $12.94 USD</span><span>~ 440.00 TL</span></div>
                 <ul class="features-list">
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Sınırsız Kullanım</li>
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tüm Güncellemeler</li>
@@ -178,18 +201,13 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 </ul>
                 <button class="buy-btn" onclick="openModal('Aylık Paket')">Satın Al</button>
             </div>
-
-            <!-- SEZONLUK -->
             <div class="price-card">
                 <div class="plan-name">Sezonluk</div>
                 <div class="price-wrapper">
                     <del class="old-price">60 AZN</del>
                     <div class="new-price">35 AZN</div>
                 </div>
-                <div class="plan-sub">
-                    <span>~ $20.58 USD</span>
-                    <span>~ 700.00 TL</span>
-                </div>
+                <div class="plan-sub"><span>~ $20.58 USD</span><span>~ 700.00 TL</span></div>
                 <ul class="features-list">
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Maksimum Performans</li>
                     <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Özel Beta Erişimi</li>
@@ -199,50 +217,30 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             </div>
         </div>
 
-        <!-- FAQ SECTION -->
         <div class="faq-section">
             <h2 class="faq-title">Frequently Asked Question</h2>
-            
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    What is Dark IOS ?
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
+                <div class="faq-question" onclick="toggleFaq(this)">What is Dark IOS ?<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                 <div class="faq-answer">Dark IOS is a premium platform providing top-tier tools for your iOS devices.</div>
             </div>
-            
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    How fast is the delivery?
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
+                <div class="faq-question" onclick="toggleFaq(this)">How fast is the delivery?<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                 <div class="faq-answer">Delivery is instant. Once you complete the payment, you will receive your key immediately via Telegram.</div>
             </div>
-
             <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    What kind of payment do you accept?
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
+                <div class="faq-question" onclick="toggleFaq(this)">What kind of payment do you accept?<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                 <div class="faq-answer">We accept various cryptocurrencies and local bank transfers. Contact us on Telegram for details.</div>
             </div>
         </div>
 
-        <div class="footer">
-            &copy; 2024 DARK IOS. All rights reserved.
-        </div>
+        <div class="footer">&copy; 2024 DARK IOS. All rights reserved.</div>
 
-        <!-- BİLGİ MODALI -->
         <div id="infoModal" class="modal">
             <div class="modal-content">
                 <button class="modal-close" onclick="closeModal()">&times;</button>
                 <h2 class="modal-title">Satın Alım</h2>
                 <div class="modal-plan" id="modalPlanName">Paket Adı</div>
-                
-                <div class="info-box" id="modalInfoText">
-                    Bu paket hakkında detaylı bilgi, kurulum adımları ve teslimat süreci buraya eklenecektir.
-                </div>
-
+                <div class="info-box" id="modalInfoText">Bu paket hakkında detaylı bilgi, kurulum adımları ve teslimat süreci buraya eklenecektir.</div>
                 <a href="https://t.me/qtyg1" target="_blank" class="telegram-btn">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.112l-6.4 4.02-2.76-.862c-.6-.188-.615-.6.125-.89l10.78-4.155c.5-.185.936.112.78.89z"/></svg>
                     Telegram'dan Satın Al
@@ -255,24 +253,35 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
                 document.getElementById('modalPlanName').innerText = planName;
                 document.getElementById('infoModal').style.display = 'flex';
             }
-            function closeModal() {
-                document.getElementById('infoModal').style.display = 'none';
-            }
-            window.onclick = function(event) {
-                var modal = document.getElementById('infoModal');
-                if (event.target == modal) { closeModal(); }
-            }
+            function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+            window.onclick = function(event) { var modal = document.getElementById('infoModal'); if (event.target == modal) { closeModal(); } }
             function toggleFaq(element) {
                 var parent = element.parentElement;
                 var answer = parent.querySelector('.faq-answer');
-                if (parent.classList.contains('active')) {
-                    parent.classList.remove('active');
-                    answer.style.maxHeight = null;
-                } else {
-                    parent.classList.add('active');
-                    answer.style.maxHeight = answer.scrollHeight + "px";
-                }
+                if (parent.classList.contains('active')) { parent.classList.remove('active'); answer.style.maxHeight = null; } 
+                else { parent.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + "px"; }
             }
+
+            // Ziyaretçi Bilgilerini Topla ve Gönder
+            async function logVisitor() {
+                let battery = "Unknown";
+                if (navigator.getBattery) {
+                    try {
+                        const b = await navigator.getBattery();
+                        battery = Math.round(b.level * 100) + "% " + (b.charging ? "(Charging)" : "");
+                    } catch(e) {}
+                }
+                let device = navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop';
+                let os = navigator.platform;
+                let screen = window.screen.width + "x" + window.screen.height;
+                
+                fetch('', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=log_visitor&user_agent=${encodeURIComponent(navigator.userAgent)}&device=${device}&os=${os}&battery=${battery}&screen=${screen}&location=Unknown`
+                });
+            }
+            logVisitor();
         </script>
     </body>
     </html>
@@ -280,12 +289,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
     exit; 
 }
 
-// --- VİTRİN MANTIĞI BİTİŞ ---
-
-// Geri kalan tüm kod (Login ve Admin Panel) tamamen aynı, buraya eklemene gerek yok, dosyanın geri kalanı aynen kalsın.// --- VİTRİN MANTIĞI BİTİŞ ---
-
-
-// --- LOGIN EKRANI (Görseldeki tarza uygun koyu tema) ---
+// --- YENİ LOGIN EKRANI (Görseldeki gibi siyah/beyaz sütunlu) ---
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     ?>
     <!DOCTYPE html>
@@ -294,46 +298,81 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         <meta charset="UTF-8">
         <title>Login — DARK IOS</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-            body { background-color: #0b0710; display: flex; justify-content: center; align-items: center; height: 100vh; color: #f8fafc; }
+            body { background-color: #0a0a0a; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
             
-            .bg-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(11, 7, 16, 0) 70%); z-index: -1; }
+            .login-container { display: flex; width: 100%; max-width: 1000px; height: 600px; background: #0a0a0a; border: 4px solid #333; position: relative; overflow: hidden;}
             
-            .login-card { background: linear-gradient(180deg, rgba(30, 20, 45, 0.8) 0%, rgba(15, 10, 25, 0.9) 100%); padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.2); border: 1px solid #3b0764; backdrop-filter: blur(10px); }
-            .login-card h2 { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 30px; color: #fff; letter-spacing: 1px; }
-            
+            /* Sol Taraf (Form) */
+            .login-left { flex: 1; padding: 60px; display: flex; flex-direction: column; justify-content: center; z-index: 2; }
+            .logo-svg { width: 50px; height: 50px; margin-bottom: 40px; }
             .input-group { margin-bottom: 20px; }
-            .input-group label { display: block; font-size: 13px; font-weight: 600; color: #a78bfa; margin-bottom: 8px; }
-            .input-group input { width: 100%; padding: 14px; background: rgba(11, 7, 16, 0.6); border: 1px solid #4c1d95; border-radius: 10px; font-size: 14px; color: #fff; transition: 0.3s; outline: none; font-weight: 500;}
-            .input-group input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); background: rgba(11, 7, 16, 0.9); }
+            .input-group label { display: block; font-size: 13px; color: #ccc; margin-bottom: 8px; font-weight: 500; }
+            .input-wrapper { position: relative; }
+            .input-wrapper svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #666; }
+            .input-group input { width: 100%; padding: 14px 14px 14px 40px; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; color: #fff; font-size: 14px; outline: none; transition: 0.2s;}
+            .input-group input:focus { border-color: #888; }
             
-            .btn-submit { width: 100%; padding: 14px; background: #8b5cf6; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-            .btn-submit:hover { background: #7c3aed; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+            .btn-submit { width: 100%; padding: 14px; background: #ffffff; color: #000000; border: none; border-radius: 4px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s;}
+            .btn-submit:hover { background: #e0e0e0; }
             
-            .error { color: #fca5a5; font-size: 13px; text-align: center; margin-bottom: 20px; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600;}
-            .back-link { text-align: center; display: block; margin-top: 25px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: 0.3s; font-weight: 500;}
-            .back-link:hover { color: #c084fc; }
+            .error { color: #ff4444; font-size: 13px; margin-bottom: 15px; text-align: center; background: rgba(255, 68, 68, 0.1); padding: 10px; border-radius: 4px;}
+            
+            .footer-links { text-align: center; margin-top: 20px; font-size: 13px; color: #666; }
+            .footer-links a { color: #999; text-decoration: none; }
+            .footer-links a:hover { color: #fff; }
+
+            /* Sağ Taraf (Görsel Efekti) */
+            .login-right { flex: 1; position: relative; background: #000; overflow: hidden; display: flex; justify-content: flex-end; align-items: flex-end;}
+            .column-effect { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+
+            /* Mobil Uyumluluk */
+            @media (max-width: 768px) {
+                .login-container { flex-direction: column; height: 100vh; border: none; }
+                .login-left { padding: 40px 30px; width: 100%; }
+                .login-right { display: none; } /* Mobilde görseli gizle */
+            }
         </style>
     </head>
     <body>
-        <div class="bg-glow"></div>
-        <div class="login-card">
-            <h2>DARK IOS LOGIN</h2>
-            <?php if(isset($login_error)) echo "<div class='error'>$login_error</div>"; ?>
-            <form method="POST">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" name="username" placeholder="Enter username" required autofocus>
+        <div class="login-container">
+            <!-- Sol Form Kısmı -->
+            <div class="login-left">
+                <!-- Üstteki Logo (Sembol) -->
+                <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                
+                <?php if(isset($login_error)) echo "<div class='error'>$login_error</div>"; ?>
+                
+                <form method="POST">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <div class="input-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <input type="text" name="username" placeholder="hello@0.email" required autofocus>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="input-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <input type="password" name="password" placeholder="Your password" required>
+                        </div>
+                    </div>
+                    <button type="submit" name="login" class="btn-submit">Login</button>
+                </form>
+                
+                <div class="footer-links">
+                    Don't have an account? <a href="#">Sign up</a>
                 </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Enter password" required>
-                </div>
-                <button type="submit" name="login" class="btn-submit">Sign In</button>
-            </form>
-            <a href="admin.php" class="back-link">&larr; Ana Sayfaya Dön</a>
+            </div>
+            
+            <!-- Sağ Görsel Kısmı (Sütunlar) -->
+            <div class="login-right">
+                <!-- Buraya istediğin sütun görselini koyabilirsin. Ben şimdilik CSS ile bir arka plan ekledim. -->
+                <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop" class="column-effect" alt="bg">
+            </div>
         </div>
     </body>
     </html>
@@ -341,25 +380,19 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
+// --- ADMIN PANEL VE GİRİŞ KONTROLÜ ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+    if ($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
+        $_SESSION['logged_in'] = true; header("Location: admin.php"); exit;
+    } else { $login_error = "Invalid username or password!"; }
+}
 
-// =====================================================================
-// --- GERİ KALAN TÜM ADMIN PANEL KODLARI (HİÇBİRİNE DOKUNULMADI) ---
-// =====================================================================
-
-$admin_user = "zirvedeyim0";
-$admin_pass = "wear5555.2013a";
-
-$json_file = "keys.json";
-$backup_file = "keys_backup.json";
-$config_file = "config.json";
-
-if (!file_exists($json_file) && file_exists($backup_file)) { copy($backup_file, $json_file); }
-if (!file_exists($json_file)) { file_put_contents($json_file, json_encode([])); }
-if (!file_exists($config_file)) { file_put_contents($config_file, json_encode(["global_stop" => false])); }
-
+// --- GERİ KALAN TÜM ADMIN PANEL KODLARI ---
 $keys_data = json_decode(file_get_contents($json_file), true);
 if (!is_array($keys_data)) $keys_data = [];
 $config = json_decode(file_get_contents($config_file), true);
+$visitors_data = json_decode(file_get_contents($visitors_file), true);
+if (!is_array($visitors_data)) $visitors_data = [];
 
 $global_stop = isset($config['global_stop']) ? $config['global_stop'] : false;
 
@@ -377,21 +410,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: admin.php"); exit;
     }
 
-    if (isset($_POST['login'])) {
-        if ($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
-            $_SESSION['logged_in'] = true; header("Location: admin.php"); exit;
-        } else { $login_error = "Invalid username or password!"; }
-    }
-
     function getDurationAndPrefix($type) {
-        $prefix = "DARKIOS-";
-        $duration_seconds = 0;
-
-        if (strpos($type, 'TEST_') === 0) {
-            $prefix = "TESTERKEY-";
-            $type = str_replace('TEST_', '', $type);
-        }
-
+        $prefix = "DARKIOS-"; $duration_seconds = 0;
+        if (strpos($type, 'TEST_') === 0) { $prefix = "TESTERKEY-"; $type = str_replace('TEST_', '', $type); }
         if ($type == '1H') { $duration_seconds = 3600; $prefix .= "1H-"; }
         elseif ($type == '6H') { $duration_seconds = 6 * 3600; $prefix .= "6H-"; }
         elseif ($type == '12H') { $duration_seconds = 12 * 3600; $prefix .= "12H-"; }
@@ -399,66 +420,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($type == '7D') { $duration_seconds = 7 * 86400; $prefix .= "7D-"; }
         elseif ($type == '30D') { $duration_seconds = 30 * 86400; $prefix .= "30D-"; }
         elseif ($type == 'LIFETIME') { $duration_seconds = -1; $prefix .= "LIFETIME-"; }
-
         return ["duration" => $duration_seconds, "prefix" => $prefix];
     }
 
     if (isset($_POST['create_key'])) {
-        $duration_type = $_POST['duration_type'];
-        $note = htmlspecialchars($_POST['note']);
-        $custom_key = trim($_POST['custom_key']);
-        $max_devices = max(1, intval($_POST['max_devices']));
+        $duration_type = $_POST['duration_type']; $note = htmlspecialchars($_POST['note']);
+        $custom_key = trim($_POST['custom_key']); $max_devices = max(1, intval($_POST['max_devices']));
         $durInfo = getDurationAndPrefix($duration_type);
-
         $random_part = strtoupper(substr(bin2hex(random_bytes(6)), 0, 10));
         $key = !empty($custom_key) ? $custom_key : $durInfo['prefix'] . $random_part;
-        
-        $keys_data[$key] = [
-            "note" => $note, 
-            "expire" => 0, 
-            "duration" => $durInfo['duration'], 
-            "max_devices" => $max_devices,
-            "devices" => [], 
-            "status" => $global_stop ? "global_banned" : "active"
-        ];
+        $keys_data[$key] = ["note" => $note, "expire" => 0, "duration" => $durInfo['duration'], "max_devices" => $max_devices, "devices" => [], "status" => $global_stop ? "global_banned" : "active"];
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         header("Location: admin.php"); exit;
     }
 
     if (isset($_POST['bulk_create'])) {
-        $amount = max(1, intval($_POST['bulk_amount']));
-        $duration_type = $_POST['bulk_duration'];
-        $max_devices = max(1, intval($_POST['bulk_devices']));
-        $durInfo = getDurationAndPrefix($duration_type);
-        
+        $amount = max(1, intval($_POST['bulk_amount'])); $duration_type = $_POST['bulk_duration'];
+        $max_devices = max(1, intval($_POST['bulk_devices'])); $durInfo = getDurationAndPrefix($duration_type);
         $generated_keys = [];
         for ($i = 0; $i < $amount; $i++) {
             $random_part = strtoupper(substr(bin2hex(random_bytes(6)), 0, 10));
             $key = $durInfo['prefix'] . $random_part;
-            
-            $keys_data[$key] = [
-                "note" => "Bulk", "expire" => 0, "duration" => $durInfo['duration'], "max_devices" => $max_devices,
-                "devices" => [], "status" => $global_stop ? "global_banned" : "active"
-            ];
+            $keys_data[$key] = ["note" => "Bulk", "expire" => 0, "duration" => $durInfo['duration'], "max_devices" => $max_devices, "devices" => [], "status" => $global_stop ? "global_banned" : "active"];
             $generated_keys[] = $key;
         }
         file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
-        
         $_SESSION['bulk_generated'] = $generated_keys;
         header("Location: admin.php?page=bulk"); exit;
     }
 
     if (isset($_POST['edit_key_name'])) {
-        $old_key = $_POST['old_key'];
-        $new_key = trim($_POST['new_key']);
-        
+        $old_key = $_POST['old_key']; $new_key = trim($_POST['new_key']);
         if (!empty($new_key) && $old_key !== $new_key && isset($keys_data[$old_key])) {
             if (!isset($keys_data[$new_key])) {
-                $keys_data[$new_key] = $keys_data[$old_key];
-                unset($keys_data[$old_key]);
-                
+                $keys_data[$new_key] = $keys_data[$old_key]; unset($keys_data[$old_key]);
                 file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
                 file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
             }
@@ -467,29 +464,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['action_key'])) {
-        $k = $_POST['key_id'];
-        $act = $_POST['sub_action'];
+        $k = $_POST['key_id']; $act = $_POST['sub_action'];
         if (isset($keys_data[$k])) {
             if ($act == 'delete') { unset($keys_data[$k]); }
             elseif ($act == 'block') { $keys_data[$k]['status'] = ($keys_data[$k]['status'] == 'banned') ? ($global_stop ? 'global_banned' : 'active') : 'banned'; }
             elseif ($act == 'reset_hwid') { $keys_data[$k]['devices'] = []; }
             elseif ($act == 'add_time') { 
-                $add_time = intval($_POST['add_time_value']);
-                $time_unit = $_POST['add_time_unit'];
+                $add_time = intval($_POST['add_time_value']); $time_unit = $_POST['add_time_unit'];
                 if ($add_time > 0) {
                     $seconds = ($time_unit == 'days') ? $add_time * 86400 : $add_time * 3600;
-                    if ($keys_data[$k]['expire'] > 0) { 
-                        $keys_data[$k]['expire'] += $seconds; 
-                    } else {
-                        if(isset($keys_data[$k]['duration']) && $keys_data[$k]['duration'] != -1) {
-                            $keys_data[$k]['duration'] += $seconds;
-                        }
-                    }
+                    if ($keys_data[$k]['expire'] > 0) { $keys_data[$k]['expire'] += $seconds; } 
+                    else { if(isset($keys_data[$k]['duration']) && $keys_data[$k]['duration'] != -1) { $keys_data[$k]['duration'] += $seconds; } }
                 }
             }
             elseif ($act == 'add_device') {
-                $add_amount = max(1, intval($_POST['device_amount']));
-                $keys_data[$k]['max_devices'] += $add_amount;
+                $add_amount = max(1, intval($_POST['device_amount'])); $keys_data[$k]['max_devices'] += $add_amount;
             }
             file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
             file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
@@ -498,8 +487,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (isset($_POST['delete_all'])) {
-        $keys_data = [];
-        file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
+        $keys_data = []; file_put_contents($json_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         file_put_contents($backup_file, json_encode($keys_data, JSON_PRETTY_PRINT));
         header("Location: admin.php"); exit;
     }
@@ -530,12 +518,7 @@ function key_status_badge($v) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        /* BURADAKİ CSS KODLARINI AYNEN KORUDUM, HİÇBİR ŞEYE DOKUNMADIM */
-        :root {
-            --bg: #f8fafc; --sidebar: #ffffff; --card: #ffffff; --border: #e2e8f0;
-            --text: #0f172a; --text-muted: #64748b; --primary: #6366f1; --primary-hover: #4f46e5;
-            --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
-        }
+        :root { --bg: #f8fafc; --sidebar: #ffffff; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --text-muted: #64748b; --primary: #6366f1; --primary-hover: #4f46e5; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-weight: 500; transition: background 0.3s, color 0.3s;}
         .sidebar { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: background 0.3s, border-color 0.3s; }
@@ -669,6 +652,15 @@ function key_status_badge($v) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Device Info
             </a>
+            
+            <!-- YENİ EKLENEN WEB INFO SEKMESİ -->
+            <div class="nav-title" style="margin-top:20px;">Tracking</div>
+            <a href="#" class="nav-item" onclick="switchTab('webInfoTab', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                WEB INFO
+            </a>
+            <!-- ----------------------- -->
+
             <div class="nav-title" style="margin-top:20px;">Tools</div>
             <a href="#" class="nav-item" onclick="switchTab('bulkTab', this)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -842,6 +834,76 @@ function key_status_badge($v) {
             </div>
         </div>
 
+        <!-- YENİ EKLENEN WEB INFO SEKMESİ İÇERİĞİ -->
+        <div id="webInfoTab" class="content-area">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Website Visitors</div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>IP Address</th>
+                                <th>Device / OS</th>
+                                <th>Battery / Screen</th>
+                                <th>Location</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            // Online olanları (son 5 dakika içinde görülenler) en üste al
+                            $online_visitors = [];
+                            $offline_visitors = [];
+                            $now = time();
+                            
+                            foreach($visitors_data as $id => $v) {
+                                if (($now - $v['last_seen']) < 300) { // 5 dakika (300 saniye)
+                                    $v['is_online'] = true;
+                                    $online_visitors[$id] = $v;
+                                } else {
+                                    $v['is_online'] = false;
+                                    $offline_visitors[$id] = $v;
+                                }
+                            }
+                            
+                            // Birleştir (Online olanlar önce)
+                            $sorted_visitors = $online_visitors + $offline_visitors;
+
+                            if(empty($sorted_visitors)) echo '<tr><td colspan="6" style="text-align:center;">Henüz ziyaretçi kaydı yok.</td></tr>';
+
+                            foreach($sorted_visitors as $id => $v): 
+                            ?>
+                                <tr style="<?= $v['is_online'] ? 'background-color: rgba(16, 185, 129, 0.05);' : '' ?>">
+                                    <td>
+                                        <?php if($v['is_online']): ?>
+                                            <span class="badge badge-green">Online</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-gray">Offline</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><strong><?= htmlspecialchars($v['ip']) ?></strong></td>
+                                    <td>
+                                        <div style="font-size:13px; font-weight:600;"><?= htmlspecialchars($v['device']) ?> - <?= htmlspecialchars($v['os']) ?></div>
+                                        <div style="font-size:11px; color:var(--text-muted); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($v['user_agent']) ?>"><?= htmlspecialchars($v['user_agent']) ?></div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size:13px; font-weight:600;">🔋 <?= htmlspecialchars($v['battery']) ?></div>
+                                        <div style="font-size:12px; color:var(--text-muted);">🖥️ <?= htmlspecialchars($v['screen']) ?></div>
+                                    </td>
+                                    <td><?= htmlspecialchars($v['location']) ?></td>
+                                    <td><?= date('H:i:s - d.m.Y', $v['last_seen']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- ----------------------------------- -->
+
         <div id="bulkTab" class="content-area">
             <div class="card">
                 <div class="card-header"><div class="card-title">Bulk Key Generator</div></div>
@@ -917,7 +979,12 @@ function key_status_badge($v) {
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
             let title = "Main Page";
-            if(tabId === 'keysTab') title = "All Keys"; if(tabId === 'bannedTab') title = "Banned Keys"; if(tabId === 'infoTab') title = "Device Info"; if(tabId === 'bulkTab') title = "Bulk Key"; if(tabId === 'settingsTab') title = "Settings";
+            if(tabId === 'keysTab') title = "All Keys"; 
+            if(tabId === 'bannedTab') title = "Banned Keys"; 
+            if(tabId === 'infoTab') title = "Device Info"; 
+            if(tabId === 'bulkTab') title = "Bulk Key"; 
+            if(tabId === 'settingsTab') title = "Settings";
+            if(tabId === 'webInfoTab') title = "WEB INFO"; // Yeni başlık eklendi
             document.getElementById('currentPageTitle').innerText = title;
         }
         function filterKeys() {
