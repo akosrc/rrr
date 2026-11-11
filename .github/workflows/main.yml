@@ -1,0 +1,50 @@
+name: Build Deb and Dylib to Zip
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # İstersen elle de başlatabilmen için
+
+jobs:
+  build:
+    runs-on: macos-latest # iOS/Mac projeleri için macOS daha uyumludur
+
+    steps:
+    - name: Depoyu Klonla
+      uses: actions/checkout@v3
+
+    - name: Theos Kurulumu
+      run: |
+        export THEOS=$HOME/theos
+        git clone --recursive https://github.com/theos/theos.git $THEOS
+        echo "THEOS=$THEOS" >> $GITHUB_ENV
+        echo "$THEOS/bin" >> $GITHUB_PATH
+
+    - name: Derleme Yap (Make)
+      run: |
+        # Theos araçlarını kullanarak derleme yap
+        make clean || true
+        make
+      continue-on-error: true
+
+    - name: Deb ve Dylib Dosyalarını Topla ve ZIP Yap
+      run: |
+        mkdir -p Cikti
+        # .deb dosyasını ara ve bul
+        if ls packages/*.deb 1> /dev/null 2>&1; then
+          cp packages/*.deb Cikti/
+        fi
+        # .dylib dosyasını ara ve bul
+        find . -name "*.dylib" -exec cp {} Cikti/ \;
+        
+        # Toplanan dosyaları ZIP'le
+        cd Cikti
+        zip -r ../Sonuclar.zip .
+        cd ..
+      continue-on-error: true
+
+    - name: ZIP Dosyasını Yükle
+      uses: actions/upload-artifact@v3
+      with:
+        name: Proje-Ciktisi-Zip
+        path: Sonuclar.zip
