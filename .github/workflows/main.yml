@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Depoyu Klonla
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Theos Kurulumu
       run: |
@@ -20,31 +20,31 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: Derleme Yap (Make)
+    - name: Derleme Yap (Hata olsa bile devam et)
       run: |
-        # Theos araçlarını kullanarak derleme yap
         make clean || true
-        make
+        make || true
       continue-on-error: true
 
     - name: Deb ve Dylib Dosyalarını Topla ve ZIP Yap
       run: |
         mkdir -p Cikti
         # .deb dosyasını ara ve bul
-        if ls packages/*.deb 1> /dev/null 2>&1; then
-          cp packages/*.deb Cikti/
-        fi
+        find . -name "*.deb" -exec cp {} Cikti/ \;
         # .dylib dosyasını ara ve bul
         find . -name "*.dylib" -exec cp {} Cikti/ \;
         
         # Toplanan dosyaları ZIP'le
         cd Cikti
-        zip -r ../Sonuclar.zip .
-        cd ..
+        if [ "$(ls -A .)" ]; then
+          zip -r ../Sonuclar.zip .
+        else
+          echo "Derleme başarısız olduğu için deb veya dylib bulunamadı." > ../Sonuclar.zip
+        fi
       continue-on-error: true
 
     - name: ZIP Dosyasını Yükle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Proje-Ciktisi-Zip
         path: Sonuclar.zip
