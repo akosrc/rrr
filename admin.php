@@ -23,7 +23,7 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             /* Navbar */
             .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 100; max-width: 1200px; margin: 0 auto; }
             .logo { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #fff; display: flex; align-items: center; gap: 8px; }
-            .logo-icon { background: #8b5cf6; width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 16px; }
+            .logo-icon { display: none !important; }
             .nav-links { display: flex; gap: 20px; align-items: center; }
             .nav-btn { color: #a78bfa; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; }
             .nav-btn:hover { color: #fff; background: rgba(139, 92, 246, 0.1); }
