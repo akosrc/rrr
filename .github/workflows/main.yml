@@ -1,23 +1,24 @@
-name: Build Deb and Dylib to Zip
+name: Build and Package
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # İstersen elle de başlatabilmen için
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - name: Depoyu Klonla
+    - name: 1. Depoyu Klonla
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-    - name: Theos Kurulumu (ZIP ile indirme)
+    - name: 2. Theos Kurulumu
       run: |
         export THEOS=$HOME/theos
         mkdir -p $THEOS
-        # Git clone yerine direkt zip olarak indirip çıkarıyoruz (Hata bu yüzden kaynaklanıyordu)
         curl -L https://github.com/theos/theos/archive/refs/heads/master.zip -o theos.zip
         unzip -q theos.zip
         mv theos-master/* $THEOS
@@ -25,31 +26,29 @@ jobs:
         echo "THEOS=$THEOS" >> $GITHUB_ENV
         echo "$THEOS/bin" >> $GITHUB_PATH
 
-    - name: Derleme Yap (Hata olsa bile devam et)
+    - name: 3. Derleme Yap (Make)
       run: |
         make clean || true
-        make || true
+        make package FINALPACKAGE=1
       continue-on-error: true
 
-    - name: Deb ve Dylib Dosyalarını Topla ve ZIP Yap
+    - name: 4. Deb ve Dylib Dosyalarını Bul ve Tek Klasörde Topla
       run: |
+        # Çıktıların toplanacağı boş bir klasör oluştur
         mkdir -p Cikti
-        # .deb dosyasını ara ve bul
-        find . -name "*.deb" -exec cp {} Cikti/ \;
-        # .dylib dosyasını ara ve bul
+        
+        # Proje içinde ne kadar .dylib varsa hepsini kopyala
         find . -name "*.dylib" -exec cp {} Cikti/ \;
         
-        # Toplanan dosyaları ZIP'le
+        # Proje içinde ne kadar .deb varsa hepsini kopyala
+        find . -name "*.deb" -exec cp {} Cikti/ \;
+        
+        # Klasörün içine gir ve klasörün İÇİNDEKİ dosyaları ZIP'le (dışarıda klasör olmasın)
         cd Cikti
-        if [ "$(ls -A .)" ]; then
-          zip -r ../Sonuclar.zip .
-        else
-          echo "Derleme başarısız olduğu için deb veya dylib bulunamadı." > ../Sonuclar.zip
-        fi
-      continue-on-error: true
+        zip -r ../Sonuc.zip .
 
-    - name: ZIP Dosyasını Yükle
+    - name: 5. Sonuc.zip Dosyasını Yükle
       uses: actions/upload-artifact@v4
       with:
-        name: Proje-Ciktisi-Zip
-        path: Sonuclar.zip
+        name: Proje-Ciktisi
+        path: Sonuc.zip
