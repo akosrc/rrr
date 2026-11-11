@@ -31,12 +31,13 @@ NSDictionary* validateKeyFromServer(NSString *enteredKey) {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request setTimeoutInterval:15.0]; // Sunucu yanıt vermezse 15 saniye sonra iptal et
     
     NSDictionary *jsonBody = @{
         @"key": enteredKey,
         @"device_id": getDeviceID(),
         @"device_model": getDeviceModelName(),
-        @"battery": getBatteryLevel() // Pil bilgisini de yolluyoruz
+        @"battery": getBatteryLevel()
     };
     
     NSError *error;
@@ -181,6 +182,7 @@ void startHeartbeatCheck() {
     
     [self.webView loadHTMLString:htmlString baseURL:nil];
     
+    // 30 saniye içinde giriş yapılmazsa ekranı kapat ve oyundan at
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (self.presentingViewController) {
             [self dismissViewControllerAnimated:YES completion:nil];
@@ -215,6 +217,8 @@ void startHeartbeatCheck() {
                     errorString = @"Key deleted.";
                 } else if ([msg containsString:@"cihazda aktivdir"] || [msg containsString:@"limit"]) {
                     errorString = @"Key active on another device or limit reached.";
+                } else if ([msg containsString:@"Sistem dayandirildi"] || [msg containsString:@"global"]) {
+                    errorString = @"System is currently stopped.";
                 }
                 
                 NSString *jsString = [NSString stringWithFormat:@"showError('%@');", errorString];
