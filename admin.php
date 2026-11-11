@@ -2,7 +2,7 @@
 session_start();
 
 // --- YENİ EKLENEN: VİTRİN (LANDING PAGE) MANTIĞI ---
-// Eğer kullanıcı giriş yapmamışsa ve login butonuna basmadıysa vitrin sayfasını göster.
+// Eğer kullanıcı giriş yapmamışsa ve login sayfasına gitmediyse vitrin sayfasını göster.
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
@@ -11,119 +11,215 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
         <meta charset="UTF-8">
         <title>DARK IOS - Premium Tools</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-            body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+            body { background-color: #0b0710; color: #f8fafc; min-height: 100vh; overflow-x: hidden; }
             
+            /* Arka Plan Efektleri */
+            .bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(11, 7, 16, 0) 70%); top: -100px; left: 50%; transform: translateX(-50%); z-index: -1; pointer-events: none; }
+            .bg-glow-2 { position: absolute; width: 800px; height: 800px; background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(11, 7, 16, 0) 70%); bottom: 0; left: -200px; z-index: -1; pointer-events: none; }
+
             /* Navbar */
-            .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #1e293b; }
-            .logo { font-size: 24px; font-weight: 800; letter-spacing: 2px; color: #fff; display: flex; align-items: center; gap: 10px; }
-            .logo span { color: #6366f1; }
-            .login-btn { background: #6366f1; color: #fff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: 0.3s; border: 1px solid #4f46e5; }
-            .login-btn:hover { background: #4f46e5; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+            .navbar { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 100; max-width: 1200px; margin: 0 auto; }
+            .logo { font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #fff; display: flex; align-items: center; gap: 8px; }
+            .logo-icon { background: #8b5cf6; width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 16px; }
+            .nav-links { display: flex; gap: 20px; align-items: center; }
+            .nav-btn { color: #a78bfa; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; }
+            .nav-btn:hover { color: #fff; background: rgba(139, 92, 246, 0.1); }
+            .login-btn { background: transparent; color: #fff; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.3s; border: 1px solid #4c1d95; }
+            .login-btn:hover { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
 
             /* Hero Section */
-            .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 20px; }
-            .hero h1 { font-size: 64px; font-weight: 800; margin-bottom: 20px; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 4px; }
-            .hero p { font-size: 18px; color: #94a3b8; max-width: 600px; line-height: 1.6; margin-bottom: 50px; }
+            .hero { text-align: center; padding: 80px 20px 60px 20px; position: relative; max-width: 900px; margin: 0 auto; }
+            .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; color: #fff; letter-spacing: -1px; }
+            .hero h1 span { color: #c084fc; }
+            .hero p { font-size: 16px; color: #94a3b8; max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
             /* Pricing Cards */
-            .pricing-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 1200px; padding: 0 20px; }
-            .price-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 30px; text-align: left; transition: 0.3s; position: relative; overflow: hidden; }
-            .price-card:hover { transform: translateY(-10px); border-color: #6366f1; box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3); }
-            .price-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #6366f1, #a855f7); }
-            .plan-name { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-bottom: 15px; }
-            .plan-price { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 5px; }
-            .plan-price span { font-size: 16px; color: #94a3b8; font-weight: 600; }
-            .plan-sub { font-size: 13px; color: #64748b; margin-bottom: 25px; display: flex; flex-direction: column; gap: 4px; }
-            .buy-btn { width: 100%; padding: 12px; background: #334155; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.3s; }
-            .buy-btn:hover { background: #6366f1; }
+            .pricing-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; }
+            .price-card { background: linear-gradient(180deg, rgba(30, 20, 45, 0.8) 0%, rgba(15, 10, 25, 0.9) 100%); border: 1px solid #3b0764; border-radius: 20px; padding: 30px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
+            .price-card:hover { transform: translateY(-5px); border-color: #8b5cf6; box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.3); }
+            .price-card.popular { border-color: #8b5cf6; box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
+            .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #8b5cf6; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; }
+            .plan-name { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+            .plan-price { font-size: 36px; font-weight: 800; color: #fff; margin-bottom: 5px; }
+            .plan-price span { font-size: 16px; color: #a78bfa; font-weight: 600; }
+            .plan-sub { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; margin-bottom: 25px; font-weight: 500; }
+            .features-list { list-style: none; margin-bottom: 30px; flex: 1; }
+            .features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
+            .features-list li svg { color: #8b5cf6; width: 16px; height: 16px; }
+            .buy-btn { width: 100%; padding: 14px; background: rgba(139, 92, 246, 0.1); color: #c084fc; border: 1px solid #8b5cf6; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.3s; }
+            .buy-btn:hover { background: #8b5cf6; color: #fff; }
 
-            /* Modal (Info) */
-            .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-            .modal-content { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 40px; width: 100%; max-width: 500px; text-align: center; position: relative; animation: fadeIn 0.3s; }
-            @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-            .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #94a3b8; cursor: pointer; background: none; border: none; }
-            .modal-close:hover { color: #fff; }
-            .modal-title { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 15px; }
-            .info-box { background: #0f172a; border: 1px dashed #475569; border-radius: 8px; padding: 30px; margin-bottom: 25px; color: #64748b; font-size: 14px; }
-            .telegram-btn { display: inline-flex; align-items: center; gap: 10px; background: #0088cc; color: #fff; padding: 14px 30px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; transition: 0.3s; width: 100%; justify-content: center; }
-            .telegram-btn:hover { background: #0077b3; box-shadow: 0 0 20px rgba(0, 136, 204, 0.5); }
-            .telegram-btn svg { width: 24px; height: 24px; }
+            /* FAQ Section */
+            .faq-section { max-width: 800px; margin: 60px auto; padding: 0 20px; position: relative; z-index: 10; }
+            .faq-title { text-align: center; font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 40px; }
+            .faq-item { background: #150f1e; border: 1px solid #2e1a47; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+            .faq-question { padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #e2e8f0; font-weight: 600; font-size: 15px; transition: 0.3s; }
+            .faq-question:hover { background: #1a1226; }
+            .faq-answer { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; color: #94a3b8; font-size: 14px; line-height: 1.6; }
+            .faq-item.active .faq-answer { padding: 0 20px 20px 20px; }
+            .faq-item.active .faq-question svg { transform: rotate(180deg); }
+            .faq-question svg { transition: 0.3s; color: #a78bfa; }
+
+            /* Footer */
+            .footer { border-top: 1px solid #1e1333; padding: 40px 20px; text-align: center; margin-top: 60px; color: #64748b; font-size: 14px; }
             
-            @media (max-width: 768px) { .hero h1 { font-size: 42px; } }
+            /* MODAL */
+            .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 7, 16, 0.8); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+            .modal-content { background: linear-gradient(180deg, #1e1432 0%, #0f0a1e 100%); border: 1px solid #4c1d95; border-radius: 24px; padding: 40px; width: 100%; max-width: 450px; text-align: center; position: relative; animation: fadeIn 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+            @keyframes fadeIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #94a3b8; cursor: pointer; background: none; border: none; transition: 0.3s; }
+            .modal-close:hover { color: #fff; }
+            .modal-title { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+            .modal-plan { color: #a78bfa; font-weight: 600; margin-bottom: 25px; }
+            .info-box { background: rgba(139, 92, 246, 0.05); border: 1px dashed #4c1d95; border-radius: 12px; padding: 30px; margin-bottom: 25px; color: #94a3b8; font-size: 14px; font-weight: 500; }
+            .telegram-btn { display: inline-flex; align-items: center; gap: 10px; background: #229ED9; color: #fff; padding: 14px 24px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; transition: 0.3s; width: 100%; justify-content: center; }
+            .telegram-btn:hover { background: #1c8dbf; box-shadow: 0 0 20px rgba(34, 158, 217, 0.4); }
+            .telegram-btn svg { width: 20px; height: 20px; }
+
+            @media (max-width: 768px) { 
+                .hero h1 { font-size: 36px; } 
+                .nav-links { display: none; } /* Mobilde menüyü gizle */
+                .navbar { justify-content: center; }
+            }
         </style>
     </head>
     <body>
+        <div class="bg-glow"></div>
+        <div class="bg-glow-2"></div>
+
         <nav class="navbar">
-            <div class="logo"><span>DARK</span> IOS</div>
-            <a href="?page=login" class="login-btn">Login</a>
+            <div class="logo"><div class="logo-icon">D</div> DARK IOS</div>
+            <div class="nav-links">
+                <!-- Telegram Kanal Linki -->
+                <a href="https://t.me/qtyg1" target="_blank" class="nav-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.112l-6.4 4.02-2.76-.862c-.6-.188-.615-.6.125-.89l10.78-4.155c.5-.185.936.112.78.89z"/></svg>
+                    Info / Channel
+                </a>
+                <a href="?page=login" class="login-btn">Login</a>
+            </div>
         </nav>
 
         <div class="hero">
-            <h1>DARK IOS</h1>
+            <h1>Try It Out First, Then<br><span>Choose a Strategy.</span></h1>
             <p>Premium araçlar ve yazılımlar için en güvenilir adres. İhtiyacına uygun paketi seç, anında teslim al.</p>
+        </div>
 
-            <div class="pricing-container">
-                <!-- 1 GÜNLÜK -->
-                <div class="price-card">
-                    <div class="plan-name">1 Günlük</div>
-                    <div class="plan-price">3 AZN</div>
-                    <div class="plan-sub">
-                        <span>~ $1.76 USD</span>
-                        <span>~ 60.00 TL</span>
-                    </div>
-                    <button class="buy-btn" onclick="openModal('1 Günlük Paket')">Satın Al</button>
+        <div class="pricing-container">
+            <!-- 1 GÜNLÜK -->
+            <div class="price-card">
+                <div class="plan-name">1 Günlük</div>
+                <div class="plan-price">3 AZN</div>
+                <div class="plan-sub">
+                    <span>~ $1.76 USD</span>
+                    <span>~ 60.00 TL</span>
                 </div>
-
-                <!-- 7 GÜNLÜK -->
-                <div class="price-card">
-                    <div class="plan-name">7 Günlük</div>
-                    <div class="plan-price">10 AZN</div>
-                    <div class="plan-sub">
-                        <span>~ $5.88 USD</span>
-                        <span>~ 200.00 TL</span>
-                    </div>
-                    <button class="buy-btn" onclick="openModal('7 Günlük Paket')">Satın Al</button>
-                </div>
-
-                <!-- AYLIK -->
-                <div class="price-card">
-                    <div class="plan-name">Aylık</div>
-                    <div class="plan-price">22 AZN</div>
-                    <div class="plan-sub">
-                        <span>~ $12.94 USD</span>
-                        <span>~ 440.00 TL</span>
-                    </div>
-                    <button class="buy-btn" onclick="openModal('Aylık Paket')">Satın Al</button>
-                </div>
-
-                <!-- SEZONLUK -->
-                <div class="price-card">
-                    <div class="plan-name">Sezonluk</div>
-                    <div class="plan-price">35 AZN</div>
-                    <div class="plan-sub">
-                        <span>~ $20.58 USD</span>
-                        <span>~ 700.00 TL</span>
-                    </div>
-                    <button class="buy-btn" onclick="openModal('Sezonluk Paket')">Satın Al</button>
-                </div>
+                <ul class="features-list">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 Cihaz Sınırı</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 7/24 Destek</li>
+                </ul>
+                <button class="buy-btn" onclick="openModal('1 Günlük Paket')">Satın Al</button>
             </div>
+
+            <!-- 7 GÜNLÜK (POPULER) -->
+            <div class="price-card popular">
+                <div class="popular-badge">POPULER</div>
+                <div class="plan-name">7 Günlük</div>
+                <div class="plan-price">10 AZN</div>
+                <div class="plan-sub">
+                    <span>~ $5.88 USD</span>
+                    <span>~ 200.00 TL</span>
+                </div>
+                <ul class="features-list">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Anında Teslimat</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Gelişmiş Özellikler</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Öncelikli Destek</li>
+                </ul>
+                <button class="buy-btn" onclick="openModal('7 Günlük Paket')">Satın Al</button>
+            </div>
+
+            <!-- AYLIK -->
+            <div class="price-card">
+                <div class="plan-name">Aylık</div>
+                <div class="plan-price">22 AZN</div>
+                <div class="plan-sub">
+                    <span>~ $12.94 USD</span>
+                    <span>~ 440.00 TL</span>
+                </div>
+                <ul class="features-list">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Sınırsız Kullanım</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Tüm Güncellemeler</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> VIP Destek</li>
+                </ul>
+                <button class="buy-btn" onclick="openModal('Aylık Paket')">Satın Al</button>
+            </div>
+
+            <!-- SEZONLUK -->
+            <div class="price-card">
+                <div class="plan-name">Sezonluk</div>
+                <div class="plan-price">35 AZN</div>
+                <div class="plan-sub">
+                    <span>~ $20.58 USD</span>
+                    <span>~ 700.00 TL</span>
+                </div>
+                <ul class="features-list">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Maksimum Performans</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Özel Beta Erişimi</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Kişisel Menajer</li>
+                </ul>
+                <button class="buy-btn" onclick="openModal('Sezonluk Paket')">Satın Al</button>
+            </div>
+        </div>
+
+        <!-- FAQ SECTION -->
+        <div class="faq-section">
+            <h2 class="faq-title">Frequently Asked Question</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What is Dark IOS ?
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">Dark IOS is a premium platform providing top-tier tools for your iOS devices.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How fast is the delivery?
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">Delivery is instant. Once you complete the payment, you will receive your key immediately via Telegram.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What kind of payment do you accept?
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">We accept various cryptocurrencies and local bank transfers. Contact us on Telegram for details.</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; 2024 DARK IOS. All rights reserved.
         </div>
 
         <!-- BİLGİ MODALI -->
         <div id="infoModal" class="modal">
             <div class="modal-content">
                 <button class="modal-close" onclick="closeModal()">&times;</button>
-                <h2 class="modal-title" id="modalPlanName">Paket Adı</h2>
+                <h2 class="modal-title">Satın Alım</h2>
+                <div class="modal-plan" id="modalPlanName">Paket Adı</div>
                 
                 <!-- BURASI BOŞ BILGI ALANI (SONRADAN DOLDURULACAK) -->
                 <div class="info-box" id="modalInfoText">
                     Bu paket hakkında detaylı bilgi, kurulum adımları ve teslimat süreci buraya eklenecektir.
                 </div>
 
-                <a href="https://t.me/dylibsafe" target="_blank" class="telegram-btn">
+                <a href="https://t.me/qtyg1" target="_blank" class="telegram-btn">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.112l-6.4 4.02-2.76-.862c-.6-.188-.615-.6.125-.89l10.78-4.155c.5-.185.936.112.78.89z"/></svg>
                     Telegram'dan Satın Al
                 </a>
@@ -138,21 +234,91 @@ if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !=
             function closeModal() {
                 document.getElementById('infoModal').style.display = 'none';
             }
-            // Dışarı tıklayınca kapatma
             window.onclick = function(event) {
                 var modal = document.getElementById('infoModal');
                 if (event.target == modal) { closeModal(); }
+            }
+            function toggleFaq(element) {
+                var parent = element.parentElement;
+                var answer = parent.querySelector('.faq-answer');
+                if (parent.classList.contains('active')) {
+                    parent.classList.remove('active');
+                    answer.style.maxHeight = null;
+                } else {
+                    parent.classList.add('active');
+                    answer.style.maxHeight = answer.scrollHeight + "px";
+                }
             }
         </script>
     </body>
     </html>
     <?php
-    exit; // Vitrin sayfasından sonra admin kodlarının çalışmasını engelle
+    exit; 
 }
 // --- VİTRİN MANTIĞI BİTİŞ ---
 
 
-// --- GERİ KALAN TÜM ADMIN KODLARI ---
+// --- LOGIN EKRANI (Görseldeki tarza uygun koyu tema) ---
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Login — DARK IOS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+            body { background-color: #0b0710; display: flex; justify-content: center; align-items: center; height: 100vh; color: #f8fafc; }
+            
+            .bg-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(11, 7, 16, 0) 70%); z-index: -1; }
+            
+            .login-card { background: linear-gradient(180deg, rgba(30, 20, 45, 0.8) 0%, rgba(15, 10, 25, 0.9) 100%); padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.2); border: 1px solid #3b0764; backdrop-filter: blur(10px); }
+            .login-card h2 { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 30px; color: #fff; letter-spacing: 1px; }
+            
+            .input-group { margin-bottom: 20px; }
+            .input-group label { display: block; font-size: 13px; font-weight: 600; color: #a78bfa; margin-bottom: 8px; }
+            .input-group input { width: 100%; padding: 14px; background: rgba(11, 7, 16, 0.6); border: 1px solid #4c1d95; border-radius: 10px; font-size: 14px; color: #fff; transition: 0.3s; outline: none; font-weight: 500;}
+            .input-group input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); background: rgba(11, 7, 16, 0.9); }
+            
+            .btn-submit { width: 100%; padding: 14px; background: #8b5cf6; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+            .btn-submit:hover { background: #7c3aed; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+            
+            .error { color: #fca5a5; font-size: 13px; text-align: center; margin-bottom: 20px; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600;}
+            .back-link { text-align: center; display: block; margin-top: 25px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: 0.3s; font-weight: 500;}
+            .back-link:hover { color: #c084fc; }
+        </style>
+    </head>
+    <body>
+        <div class="bg-glow"></div>
+        <div class="login-card">
+            <h2>DARK IOS LOGIN</h2>
+            <?php if(isset($login_error)) echo "<div class='error'>$login_error</div>"; ?>
+            <form method="POST">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="Enter username" required autofocus>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Enter password" required>
+                </div>
+                <button type="submit" name="login" class="btn-submit">Sign In</button>
+            </form>
+            <a href="admin.php" class="back-link">&larr; Ana Sayfaya Dön</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+
+// =====================================================================
+// --- GERİ KALAN TÜM ADMIN PANEL KODLARI (HİÇBİRİNE DOKUNULMADI) ---
+// =====================================================================
+
 $admin_user = "zirvedeyim0";
 $admin_pass = "wear5555.2013a";
 
@@ -316,56 +482,6 @@ if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     unset($_SESSION['logged_in']); header("Location: admin.php"); exit;
 }
 
-// --- LOGIN EKRANI (Sadece ?page=login dendiğinde çıkar) ---
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Login — DARK IOS</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet">
-        <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-            body { background-color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; color: #0f172a; font-weight: 600;}
-            .login-card { background: #ffffff; padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-            .login-card h2 { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 30px; color: #0f172a; }
-            .input-group { margin-bottom: 20px; }
-            .input-group label { display: block; font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; }
-            .input-group input { width: 100%; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; color: #0f172a; transition: 0.2s; outline: none; font-weight: 600;}
-            .input-group input:focus { border-color: #6366f1; background: #fff; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-            .btn-submit { width: 100%; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-            .btn-submit:hover { background: #4f46e5; }
-            .error { color: #dc2626; font-size: 13px; text-align: center; margin-bottom: 20px; background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; font-weight: 600;}
-            .back-link { text-align: center; display: block; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 14px; }
-            .back-link:hover { color: #6366f1; }
-        </style>
-    </head>
-    <body>
-        <div class="login-card">
-            <h2>DARK IOS LOGIN</h2>
-            <?php if(isset($login_error)) echo "<div class='error'>$login_error</div>"; ?>
-            <form method="POST">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" name="username" placeholder="Enter username" required autofocus>
-                </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Enter password" required>
-                </div>
-                <button type="submit" name="login" class="btn-submit">Sign In</button>
-            </form>
-            <a href="admin.php" class="back-link">&larr; Ana Sayfaya Dön</a>
-        </div>
-    </body>
-    </html>
-    <?php
-    exit;
-}
-
-// --- GERİ KALAN DASHBOARD KODU (SENİN ORJİNAL KODUN) ---
 $total_keys_count = count($keys_data);
 $total_online_devices = 0;
 foreach ($keys_data as $k => $v) { if (isset($v['devices']) && is_array($v['devices'])) { $total_online_devices += count($v['devices']); } }
