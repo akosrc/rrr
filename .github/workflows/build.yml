@@ -1,0 +1,32 @@
+name: Build Tweak (.deb & .dylib)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Theos
+        uses: unforgiven-dev/install-theos-action@master
+
+      - name: Build Package (.deb & .dylib)
+        run: |
+          echo "Kompilyasiya başladılır..."
+          make package FINALPACKAGE=1
+          
+          echo "Yaranmış fayllar yoxlanılır..."
+          find . -name "*.deb" -o -name "*.dylib"
+
+      - name: Upload Artifacts (.deb)
+        uses: actions/upload-artifact@v3
+        with:
+          name: compiled-tweak-deb
+          path: packages/*.deb
