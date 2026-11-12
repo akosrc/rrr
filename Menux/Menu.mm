@@ -18,8 +18,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
-#include <string>
-#include <stdio.h>
 #include <string.h>
 #include "../ESP/Vector3.hpp"
 #include "../ESP/Vector2.hpp"
@@ -859,7 +857,13 @@ void DrawSettingsTab() {
     if (ImGui::Button("Load VIP Config", ImVec2(-1, 80))) { LockStatus = true; Tigerjump = true; bighitV5 = true; Rainbow1 = true; Enable = true; AutoStandd = true; FAKEDAMAGEV3 = true; ipadview = true; WideValue = 125; NoCameraShake = true; }
 }
 
-@interface MenuImplementation : NSObject
+@interface MenuImplementation : NSObject {
+    @public
+    struct {
+        bool menuStatus;
+        int fps;
+    } *moduleControl;
+}
 - (void)drawMenuWindow;
 - (UIWindow*)GetUIW;
 - (void)readIniConfig;
@@ -885,7 +889,7 @@ void DrawSettingsTab() {
     std::wstring w2 = j2(m8(w1));
     std::string wnDtu(w2.begin(), w2.end());
 
-    if (ImGui::Begin(wnDtu.c_str(), &self.moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
+    if (ImGui::Begin(wnDtu.c_str(), &self->moduleControl->menuStatus, ImGuiWindowFlags_NoCollapse)) {
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::Info);
         ImGui::PopStyleColor();
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
@@ -950,11 +954,21 @@ void DrawSettingsTab() {
 }
 
 - (void)readIniConfig {
-    switch(self.moduleControl->fps) {
-        case 0: overlayView.preferredFramesPerSecond = 60; break;
-        case 1: overlayView.preferredFramesPerSecond = 90; break;
-        case 2: overlayView.preferredFramesPerSecond = 120; break;
-        default: overlayView.preferredFramesPerSecond = 60; break;
+    UIWindow *win = [self GetUIW];
+    MTKView *overlayView = nil;
+    for (UIView *subview in win.subviews) {
+        if ([subview isKindOfClass:[MTKView class]]) {
+            overlayView = (MTKView *)subview;
+            break;
+        }
+    }
+    if (overlayView) {
+        switch(self->moduleControl->fps) {
+            case 0: overlayView.preferredFramesPerSecond = 60; break;
+            case 1: overlayView.preferredFramesPerSecond = 90; break;
+            case 2: overlayView.preferredFramesPerSecond = 120; break;
+            default: overlayView.preferredFramesPerSecond = 60; break;
+        }
     }
 }
 
@@ -963,3 +977,4 @@ void DrawSettingsTab() {
 - (void)dealloc {}
 
 @end
+```eof
