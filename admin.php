@@ -46,7 +46,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'log_visitor') {
     echo json_encode(["status" => "success"]); exit;
 }
 
-// --- VİTRİN (LANDING PAGE) MANTIĞI ---
+// --- VİTRİN  (LANDING PAGE) MANTIĞI ---
 if (!isset($_SESSION['logged_in']) && (!isset($_GET['page']) || $_GET['page'] !== 'login')) {
     ?>
     <!DOCTYPE html>
