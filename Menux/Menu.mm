@@ -859,16 +859,20 @@ void DrawSettingsTab() {
     if (ImGui::Button("Load VIP Config", ImVec2(-1, 80))) { LockStatus = true; Tigerjump = true; bighitV5 = true; Rainbow1 = true; Enable = true; AutoStandd = true; FAKEDAMAGEV3 = true; ipadview = true; WideValue = 125; NoCameraShake = true; }
 }
 
-// ============= MAIN MENU WINDOW (KEY KONTROLLÜ) =============
+@interface MenuImplementation : NSObject
+- (void)drawMenuWindow;
+- (UIWindow*)GetUIW;
+- (void)readIniConfig;
+- (void)saveIniConfig;
+@end
 
--(void)drawMenuWindow {
-    // --- KRİTİK KEY KONTROLÜ BURADA ---
-    // Eğer key girilmemişse menüyü hiç çizdirme, Key ekranını aç ve çık.
+@implementation MenuImplementation
+
+- (void)drawMenuWindow {
     if (globalActiveKey == nil) {
         showKeyMenu();
         return; 
     }
-    // ----------------------------------
 
     ImGui::CreateContext();
     ApplyModernDarkTheme();
@@ -934,8 +938,6 @@ void DrawSettingsTab() {
     ImGui::End();
 }
 
-// ============= UTILITY FUNCTIONS =============
-
 - (UIWindow*)GetUIW {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     if (window.windowLevel != UIWindowLevelNormal) {
@@ -947,7 +949,7 @@ void DrawSettingsTab() {
     return window;
 }
 
--(void)readIniConfig {
+- (void)readIniConfig {
     switch(self.moduleControl->fps) {
         case 0: overlayView.preferredFramesPerSecond = 60; break;
         case 1: overlayView.preferredFramesPerSecond = 90; break;
@@ -956,7 +958,7 @@ void DrawSettingsTab() {
     }
 }
 
--(void)saveIniConfig {}
+- (void)saveIniConfig {}
 
 - (void)dealloc {}
 
