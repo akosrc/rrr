@@ -20,7 +20,7 @@ dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), di
 UILabel *myLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 330.10, 300, 30)];
 myLabel.textColor = [UIColor whiteColor];
 myLabel.numberOfLines = 0;
-myLabel.text = [NSString stringWithFormat:@"My channel  @DarkiosChannel "];
+myLabel.text = [NSString stringWithFormat:@"My channel  @DarkİosChannel "];
 myLabel.textAlignment = NSTextAlignmentCenter;
 myLabel.shadowColor = [UIColor blackColor];
 myLabel.shadowOffset = CGSizeMake(1,1); 
