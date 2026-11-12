@@ -1,5 +1,10 @@
 #import <JRMemory/JRMemory.h>
 #import <UIKit/UIKit.h>
+#import <Metal/Metal.h>
+#import <objc/runtime.h>
+#import <mach-o/dyld.h>
+
+%config(generator=internal)
 
 // --- KEY SİSTEMİ ENTEGRASYONU BAŞLANGIÇ ---
 extern void showKeyMenu(void);
@@ -7,7 +12,6 @@ extern NSString* globalActiveKey;
 
 static BOOL isKeyAuthenticated = NO;
 
-// KeySystem.mm'den başarılı giriş yapıldığında gönderilen "StartHack" bildirimini dinliyoruz
 __attribute__((constructor))
 static void initKeyObserver() {
     [[NSNotificationCenter defaultCenter] addObserverForName:@"StartHack" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -82,15 +86,14 @@ void setSpeedPlayer(bool state) {
 }
 
 
-// --- HOOK KISMI (KEY KONTROLÜ BURADA YAPILIYOR) ---
+// --- HOOK KISMI (KEY KONTROLÜ VE EKRAN LABELİ) ---
 %hook UIViewController
 
 - (void)viewDidLoad {
     %orig; // Orijinal kodu çalıştır
     
-    // Eğer key henüz doğrulanmadıysa ve bu ekran ana ekransa (veya oyunun ilk ekranıysa)
+    // Eğer key henüz doğrulanmadıysa və bu ekran ana ekransa
     if (!isKeyAuthenticated && globalActiveKey == nil) {
-        // Uygulama açıldığında Key menüsünü tetikle
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!isKeyAuthenticated && globalActiveKey == nil) {
                 showKeyMenu();
@@ -100,6 +103,30 @@ void setSpeedPlayer(bool state) {
 }
 
 %end
+
+
+// Kanal etiketini (Watermark / Label) əlavə etmək üçün hook
+@interface IOSViewController : UIViewController 
+- (void)textMove:(id)sender; 
+@end 
+
+%hook IOSViewController 
+- (void)loadView { 
+    %orig; 
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ 
+        UILabel *myLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, 330.10, 300, 30)];
+        myLabel.textColor = [UIColor whiteColor];
+        myLabel.numberOfLines = 0;
+        myLabel.text = [NSString stringWithFormat:@"My channel  @nextoo_top1 "];
+        myLabel.textAlignment = NSTextAlignmentCenter;
+        myLabel.shadowColor = [UIColor blackColor];
+        myLabel.shadowOffset = CGSizeMake(1,1); 
+        myLabel.backgroundColor = [UIColor clearColor];
+        [self.view addSubview:myLabel];
+    });
+} 
+%end
+
 
 %hook TweakViewController
 
@@ -112,3 +139,7 @@ void setSpeedPlayer(bool state) {
 }
 
 %end
+
+%ctor {
+    NSLog(@"[M7MD] Tweak dylib loaded successfully with Key System and Watermark!");
+}
