@@ -1,3 +1,19 @@
+name: Build iOS Tweak
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Setup Theos Manually
         run: |
           if [ ! -d "$HOME/theos" ]; then
@@ -12,3 +28,12 @@
           
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
+
+      - name: Install ldid
+        run: |
+          brew install ldid
+
+      - name: Build Package
+        run: |
+          echo "Kompilyasiya başladılır..."
+          make package FINALPACKAGE=1
